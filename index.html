@@ -2009,5 +2009,28 @@ function getTimeAgo(ts) {
   </div>
 </div>
 
+<!-- 🔥 ADD FIREBASE CODE HERE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyDA3v4MG_UNzCYUidEHS-mqo8hCXrnnRk4",
+  authDomain: "accident-detection-app-fbd6f.firebaseapp.com",
+  databaseURL: "https://accident-detection-app-fbd6f-default-rtdb.firebaseio.com",
+  projectId: "accident-detection-app-fbd6f"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+function test(){
+  firebase.database().ref("test").set({
+    message: "Connected successfully"
+  });
+}
+</script>
+
+<button onclick="test()">Test Backend</button>
+
 </body>
 </html>
