@@ -499,6 +499,83 @@ input::placeholder{color:var(--muted);}
   font-size:.7rem;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.05em;
 }
 .live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--r);animation:blink 1s infinite;flex-shrink:0;}
+
+/* ══ MEDIC TRACKER ══ */
+.tracker-section{margin-top:1.4rem;}
+.tracker-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.tracker-online-pill{background:rgba(0,217,126,.1);border:1px solid rgba(0,217,126,.2);color:var(--g);border-radius:20px;padding:.15rem .6rem;font-size:.68rem;font-weight:800;}
+.tracker-card{display:flex;align-items:center;gap:.75rem;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:.8rem 1rem;margin-bottom:.55rem;transition:border-color .3s;}
+.tracker-card.tc-online{border-color:rgba(0,217,126,.25);}
+.tracker-card.tc-responding{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.03);}
+.tracker-card.tc-sos{border-color:rgba(230,46,46,.5);background:rgba(230,46,46,.04);animation:tc-pulse 1.8s ease-in-out infinite;}
+@keyframes tc-pulse{0%,100%{border-color:rgba(230,46,46,.5)}50%{border-color:rgba(230,46,46,.9)}}
+.tc-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.tc-av-online{background:rgba(0,217,126,.15);border:1.5px solid rgba(0,217,126,.3);}
+.tc-av-offline{background:var(--bg4);border:1.5px solid var(--border);}
+.tc-av-sos{background:rgba(230,46,46,.15);border:1.5px solid rgba(230,46,46,.5);}
+.tc-info{flex:1;min-width:0;}
+.tc-name{font-size:.84rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tc-role{font-size:.67rem;color:var(--muted2);margin-top:1px;}
+.tc-status{font-size:.68rem;font-weight:700;margin-top:2px;}
+.tcs-on{color:var(--g);}
+.tcs-off{color:var(--muted);}
+.tcs-resp{color:var(--b);}
+.tcs-sos{color:var(--r);}
+.tc-badge{font-size:.62rem;font-weight:800;padding:.15rem .45rem;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+.tcb-on{background:rgba(0,217,126,.1);color:var(--g);}
+.tcb-off{background:var(--bg4);color:var(--muted);}
+.tcb-resp{background:rgba(59,130,246,.12);color:var(--b);}
+.tcb-sos{background:rgba(230,46,46,.15);color:var(--r);}
+
+/* ══ MEDIC SOS BUTTON ══ */
+.medic-sos-section{margin-bottom:1.2rem;padding:1rem;background:rgba(230,46,46,.04);border:1px solid rgba(230,46,46,.12);border-radius:14px;}
+.medic-sos-lbl{font-size:.68rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.65rem;}
+.medic-sos-btn{width:100%;padding:.8rem;border:none;border-radius:10px;background:linear-gradient(135deg,#b81e1e,#e62e2e);color:#fff;font-family:var(--head);font-size:1rem;font-weight:800;letter-spacing:.05em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 18px rgba(230,46,46,.3);transition:transform .15s;}
+.medic-sos-btn:active{transform:scale(.97);}
+.medic-sos-btn.firing{animation:sos-glow 1.5s ease-in-out infinite;}
+.medic-sos-hint{font-size:.67rem;color:var(--muted2);text-align:center;margin-top:.45rem;}
+.medic-sos-active-bar{margin-top:.6rem;background:rgba(230,46,46,.08);border:1px solid rgba(230,46,46,.2);border-radius:8px;padding:.55rem .8rem;display:none;align-items:center;justify-content:space-between;}
+.medic-sos-active-bar.show{display:flex;}
+.medic-sos-active-txt{font-size:.73rem;color:var(--r);font-weight:700;}
+.medic-sos-cancel{background:none;border:1px solid rgba(230,46,46,.3);color:var(--r);border-radius:5px;padding:.2rem .65rem;cursor:pointer;font-family:var(--font);font-size:.7rem;}
+
+/* ══ ALERT NOTIFICATION BANNER (medic receives) ══ */
+.alert-notif-banner{background:rgba(230,46,46,.07);border:1.5px solid rgba(230,46,46,.28);border-radius:14px;padding:.9rem 1rem;margin-bottom:.8rem;animation:anb-in .35s ease;}
+@keyframes anb-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.anb-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem;}
+.anb-title{font-family:var(--head);font-size:.92rem;font-weight:800;color:var(--r);}
+.anb-close{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.85rem;line-height:1;}
+.anb-victim{font-size:.85rem;font-weight:700;margin-bottom:.15rem;}
+.anb-loc{font-size:.73rem;color:var(--muted2);margin-bottom:.55rem;}
+.anb-actions{display:flex;gap:.5rem;}
+
+/* ══ INCOMING ALERT POPUP OVERLAY (full-screen flash) ══ */
+.alert-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);z-index:8000;display:none;align-items:center;justify-content:center;padding:1.5rem;}
+.alert-popup-overlay.show{display:flex;animation:fadeUp .3s ease;}
+.alert-popup-card{background:var(--bg2);border:2px solid rgba(230,46,46,.5);border-radius:20px;padding:1.5rem;width:100%;max-width:360px;text-align:center;box-shadow:0 0 60px rgba(230,46,46,.25);}
+.apc-icon{font-size:2.8rem;margin-bottom:.6rem;}
+.apc-title{font-family:var(--head);font-size:1.5rem;font-weight:800;color:var(--r);margin-bottom:.3rem;}
+.apc-sub{font-size:.82rem;color:var(--muted2);margin-bottom:.9rem;line-height:1.5;}
+.apc-info{background:var(--bg3);border-radius:10px;padding:.85rem;text-align:left;margin-bottom:1rem;}
+.apc-row{display:flex;gap:.5rem;font-size:.8rem;margin-bottom:.35rem;}
+.apc-row:last-child{margin-bottom:0;}
+.apc-lbl{color:var(--muted2);font-weight:600;min-width:55px;}
+.apc-val{color:var(--text);font-weight:700;}
+
+/* ══ PARENT ALERT OVERLAY ══ */
+.parent-alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);z-index:9000;display:none;align-items:center;justify-content:center;padding:1.5rem;}
+.parent-alert-overlay.show{display:flex;animation:fadeUp .3s ease;}
+.parent-alert-card{background:var(--bg2);border:2px solid var(--r);border-radius:20px;padding:1.8rem;width:100%;max-width:340px;text-align:center;}
+.pac-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(230,46,46,.1);border:1px solid rgba(230,46,46,.3);border-radius:20px;padding:.3rem .9rem;font-size:.72rem;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.06em;margin-bottom:1rem;}
+.pac-icon{font-size:3.2rem;margin-bottom:.7rem;}
+.pac-title{font-family:var(--head);font-size:1.6rem;font-weight:800;color:var(--r);margin-bottom:.4rem;}
+.pac-body{font-size:.82rem;color:var(--muted2);line-height:1.6;margin-bottom:1.1rem;}
+.pac-info{background:var(--bg3);border-radius:10px;padding:.85rem;text-align:left;margin-bottom:1.2rem;}
+.pac-row{display:flex;gap:.5rem;font-size:.8rem;margin-bottom:.35rem;}
+.pac-row:last-child{margin-bottom:0;}
+.pac-lbl{color:var(--muted2);font-weight:600;min-width:60px;}
+.pac-val{color:var(--text);font-weight:700;}
+
 </style>
 </head>
 <body>
@@ -513,15 +590,14 @@ input::placeholder{color:var(--muted);}
   <div class="splash-logo">RAPID<em>AID</em></div>
   <div class="splash-tagline">Live Emergency Network · Hyderabad</div>
   <div class="splash-btns">
-    <button class="btn btn-red" onclick="show('register')">Create Account</button>
-    <button class="btn btn-outline" onclick="show('login')">Sign In</button>
+    <button class="btn btn-red" onclick="show('register')">Get Started — Register</button>
     <div style="text-align:center;margin-top:.3rem;">
       <span class="link-text" style="font-size:.75rem;" onclick="openAdminModal()">🔐 Admin Panel</span>
     </div>
   </div>
   <div class="splash-note">
-    ⚡ Real-time alerts · SMS to parents · Live ambulance tracking<br>
-    <span style="color:var(--r);font-weight:600;">Requires Firebase setup for multi-user sync</span>
+    ⚡ Register once · No login needed · Parent SMS on SOS only<br>
+    Live alerts · Medic tracker · Medic emergency SOS
   </div>
 </section>
 
@@ -532,25 +608,21 @@ input::placeholder{color:var(--muted);}
   <div class="auth-page">
     <div class="auth-back" onclick="show('splash')">← Back</div>
     <div class="page-title">JOIN<br><em>RAPIDAID</em></div>
-    <div class="page-sub">Register once. Respond everywhere.</div>
+    <div class="page-sub">Register once — no password, no login. Your device remembers you.</div>
 
     <div class="err" id="regErr">Please complete all fields.</div>
 
     <div class="fgrp">
-      <label>Full Name</label>
+      <label>Full Name *</label>
       <input type="text" id="rName" placeholder="Arjun Sharma">
     </div>
     <div class="fgrp">
-      <label>Phone Number</label>
+      <label>Phone Number *</label>
       <input type="tel" id="rPhone" placeholder="+91 98765 43210">
     </div>
     <div class="fgrp">
-      <label>Parent / Guardian Phone</label>
+      <label>Parent / Guardian Phone <span style="color:var(--muted);font-weight:400;font-size:.85em;">(gets SOS alerts)</span></label>
       <input type="tel" id="rParent" placeholder="+91 98765 43210">
-    </div>
-    <div class="fgrp">
-      <label>Password</label>
-      <input type="password" id="rPass" placeholder="Min 6 characters">
     </div>
 
     <div class="fgrp">
@@ -580,8 +652,10 @@ input::placeholder{color:var(--muted);}
       </div>
     </div>
 
-    <button class="btn btn-red" onclick="doRegister()">Register →</button>
-    <div style="text-align:center;margin-top:.8rem;" class="link-text" onclick="show('login')">Already registered? Sign In</div>
+    <button class="btn btn-red" onclick="doRegister()">Register &amp; Enter →</button>
+    <div style="margin-top:.8rem;padding:.7rem .9rem;background:rgba(0,217,126,.04);border:1px solid rgba(0,217,126,.12);border-radius:8px;font-size:.72rem;color:var(--muted2);line-height:1.65;">
+      ✅ Already registered on this device? Your phone number will auto-recognise you.
+    </div>
 
     <div class="setup-guide mt2">
       <div class="sg-title">⚡ Firebase Setup (for multi-user sync)</div>
@@ -721,10 +795,23 @@ input::placeholder{color:var(--muted);}
 
   <div class="medic-scroll">
     <div class="mhdr">
-      <div class="mhdr-title">NEARBY<br>ALERTS</div>
+      <div class="mhdr-title">MEDIC<br>DASHBOARD</div>
       <div class="online-wrap">
         <div class="olabel off" id="ol-lbl">OFFLINE</div>
         <div class="toggle-sw" id="onlineSw" onclick="toggleOnline()"></div>
+      </div>
+    </div>
+
+    <!-- ── MEDIC EMERGENCY SOS ── -->
+    <div class="medic-sos-section">
+      <div class="medic-sos-lbl">⚠️ Medic Emergency — Personal SOS</div>
+      <button class="medic-sos-btn" id="medicSosBtn" onclick="triggerMedicSOS()">
+        🆘 &nbsp;MEDIC SOS — I NEED HELP
+      </button>
+      <div class="medic-sos-hint">Use only when YOU are in critical danger. No parent alert sent.</div>
+      <div class="medic-sos-active-bar" id="medicSosBar">
+        <span class="medic-sos-active-txt">🔴 MEDIC SOS ACTIVE</span>
+        <button class="medic-sos-cancel" onclick="cancelMedicSOS()">Cancel</button>
       </div>
     </div>
 
@@ -738,12 +825,26 @@ input::placeholder{color:var(--muted);}
       </div>
     </div>
 
+    <!-- ── INCOMING ALERT BANNERS (injected by JS) ── -->
+    <div id="alert-banners-wrap"></div>
+
     <div class="sec-hdr">
       <div class="sec-title">ACTIVE ALERTS</div>
       <div class="badge" id="m-badge">0</div>
     </div>
     <div id="m-alert-list">
       <div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Go online to receive alerts from your area.</div></div>
+    </div>
+
+    <!-- ── MEDIC TRACKER ── -->
+    <div class="tracker-section">
+      <div class="tracker-hdr">
+        <div class="sec-title">MEDIC TRACKER</div>
+        <div class="tracker-online-pill" id="tracker-pill">0 online</div>
+      </div>
+      <div id="medic-tracker-list">
+        <div class="empty"><div class="empty-icon">🧑‍⚕️</div><div class="empty-text">Go online to appear in the tracker.</div></div>
+      </div>
     </div>
   </div>
 
@@ -862,8 +963,7 @@ input::placeholder{color:var(--muted);}
 
 <script>
 // ═══════════════════════════════════════════════════════════
-//  FIREBASE CONFIG — paste your config here for real multi-user
-//  Get it from: Firebase Console → Project Settings → Web App
+//  FIREBASE CONFIG
 // ═══════════════════════════════════════════════════════════
 const FIREBASE_CONFIG = {
   apiKey: "YOUR_API_KEY",
@@ -874,80 +974,89 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
-
-// ═══════════════════════════════════════════════════════════
-//  TWILIO CONFIG — for real SMS
-//  Calls your backend endpoint that sends SMS via Twilio
-// ═══════════════════════════════════════════════════════════
-const TWILIO_ENDPOINT = "https://your-backend.com/send-sms"; // Replace with your endpoint
+const TWILIO_ENDPOINT = "https://your-backend.com/send-sms";
 
 // ═══════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════
-let firebaseReady = false;
-let db = null;
-let currentUser = null;
-let selectedRole = null;
+let firebaseReady = false, db = null;
+let currentUser    = null;
+let selectedRole   = null;
 let selectedMedicTypes = [];
-let isOnline = false;
-let selectedRange = 1;
-let sosActive = false;
+let isOnline       = false;
+let selectedRange  = 1;
+let sosActive      = false;
+let medicSosActive = false;
 let sosTimerInterval = null;
-let elapsedSecs = 0;
-let photoDataURL = null;
-let userLoc = { lat: 17.385044, lng: 78.486671, text: 'Hyderabad, Telangana' };
-let currentAlertId = null;
-let leafletMap = null;
-let ambulanceMarker = null;
-let victimMarker = null;
-let alertListeners = {};
-let ambInterval = null;
+let elapsedSecs    = 0;
+let photoDataURL   = null;
+let userLoc        = { lat: 17.385044, lng: 78.486671, text: 'Hyderabad, Telangana' };
+let currentAlertId      = null;
+let currentMedicSosId   = null;
+let leafletMap          = null;
+let ambulanceMarker     = null;
+let victimMarker        = null;
+let alertListeners      = {};
+let ambInterval         = null;
 let currentAlertForModal = null;
+let popupAlertId        = null;   // alert shown in popup to medic
 
 // ═══════════════════════════════════════════════════════════
-//  LOCAL DB (runs when Firebase isn't configured)
-//  Simulates multi-user via localStorage + BroadcastChannel
+//  LOCAL DB — localStorage + BroadcastChannel
 // ═══════════════════════════════════════════════════════════
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('rapidaid') : null;
 if (channel) {
-  channel.onmessage = (e) => {
-    const { type, data } = e.data;
-    if (type === 'NEW_ALERT') {
+  channel.onmessage = ({ data: msg }) => {
+    // ── New victim SOS or medic SOS ──
+    if (msg.type === 'NEW_ALERT') {
       if (currentUser?.role === 'medic' && isOnline) {
-        setTimeout(() => { loadMedicAlerts(); toast('🚨 New SOS alert nearby!', 'e'); }, 300);
+        setTimeout(() => {
+          loadMedicAlerts();
+          refreshMedicTracker();
+          showAlertPopupToMedic(msg.data);
+          injectAlertBanner(msg.data);
+        }, 200);
       }
       if (currentUser?.role === 'user') checkNearbyAlerts();
     }
-    if (type === 'ALERT_UPDATE' && currentAlertId === data.id) {
-      refreshAlertCard(data);
+    // ── Medic status changed (online/offline/responding/SOS) ──
+    if (msg.type === 'MEDIC_STATUS') {
+      if (currentUser?.role === 'medic') refreshMedicTracker();
     }
-    if (type === 'ALERT_CANCELLED') {
-      loadMedicAlerts();
+    // ── Alert updated (responder added) ──
+    if (msg.type === 'ALERT_UPDATE' && currentAlertId === msg.data.id) {
+      refreshAlertCard(msg.data);
+    }
+    // ── Alert cancelled ──
+    if (msg.type === 'ALERT_CANCELLED') {
+      if (currentUser?.role === 'medic') loadMedicAlerts();
     }
   };
 }
 
 const LS = {
-  users: () => JSON.parse(localStorage.getItem('ra_users') || '[]'),
-  setUsers: (v) => localStorage.setItem('ra_users', JSON.stringify(v)),
-  alerts: () => JSON.parse(localStorage.getItem('ra_alerts') || '[]'),
-  setAlerts: (v) => localStorage.setItem('ra_alerts', JSON.stringify(v)),
-  me: () => JSON.parse(localStorage.getItem('ra_me') || 'null'),
-  setMe: (v) => localStorage.setItem('ra_me', JSON.stringify(v)),
-  clearMe: () => localStorage.removeItem('ra_me'),
+  users:       () => JSON.parse(localStorage.getItem('ra_users')        || '[]'),
+  setUsers:   (v) => localStorage.setItem('ra_users', JSON.stringify(v)),
+  alerts:      () => JSON.parse(localStorage.getItem('ra_alerts')       || '[]'),
+  setAlerts:  (v) => localStorage.setItem('ra_alerts', JSON.stringify(v)),
+  tracker:     () => JSON.parse(localStorage.getItem('ra_tracker')      || '{}'),
+  setTracker: (v) => localStorage.setItem('ra_tracker', JSON.stringify(v)),
+  me:          () => JSON.parse(localStorage.getItem('ra_me')           || 'null'),
+  setMe:      (v) => localStorage.setItem('ra_me', JSON.stringify(v)),
+  clearMe:     () => localStorage.removeItem('ra_me'),
 };
 
 // ═══════════════════════════════════════════════════════════
-//  FIREBASE INIT (graceful fallback to localStorage)
+//  FIREBASE INIT
 // ═══════════════════════════════════════════════════════════
 function initFirebase() {
   try {
-    if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') { console.log('RapidAid: Using localStorage (Firebase not configured)'); return; }
+    if (FIREBASE_CONFIG.apiKey === 'YOUR_API_KEY') { console.log('RapidAid: localStorage mode'); return; }
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
     firebaseReady = true;
-    console.log('RapidAid: Firebase connected ✓');
-  } catch(e) { console.log('Firebase init failed, using localStorage:', e.message); }
+    console.log('RapidAid: Firebase ✓');
+  } catch(e) { console.log('Firebase failed, using localStorage:', e.message); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -966,28 +1075,25 @@ window.onload = () => {
 function getLocation() {
   if (!navigator.geolocation) { setLocText(); return; }
   navigator.geolocation.watchPosition(pos => {
-    userLoc.lat = pos.coords.latitude;
-    userLoc.lng = pos.coords.longitude;
+    userLoc.lat  = pos.coords.latitude;
+    userLoc.lng  = pos.coords.longitude;
     userLoc.text = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
     setLocText();
-    // If SOS is active, update location in real time
     if (sosActive && currentAlertId) updateAlertLocation();
+    if (currentUser?.role === 'medic' && isOnline) updateTrackerLocation();
   }, () => setLocText(), { enableHighAccuracy: true, maximumAge: 5000 });
 }
-
 function setLocText() {
   const el = document.getElementById('locText');
   if (el) el.textContent = userLoc.text;
 }
-
 function updateAlertLocation() {
-  const alerts = LS.alerts();
-  const a = alerts.find(x => x.id === currentAlertId);
-  if (a) {
-    a.lat = userLoc.lat; a.lng = userLoc.lng; a.locationText = userLoc.text;
-    LS.setAlerts(alerts);
-    if (firebaseReady) db.ref(`alerts/${currentAlertId}`).update({ lat: userLoc.lat, lng: userLoc.lng, locationText: userLoc.text });
-  }
+  const alerts = LS.alerts(), a = alerts.find(x => x.id === currentAlertId);
+  if (a) { a.lat = userLoc.lat; a.lng = userLoc.lng; a.locationText = userLoc.text; LS.setAlerts(alerts); }
+}
+function updateTrackerLocation() {
+  const t = LS.tracker();
+  if (t[currentUser.id]) { t[currentUser.id].lat = userLoc.lat; t[currentUser.id].lng = userLoc.lng; LS.setTracker(t); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -997,36 +1103,34 @@ function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
 function goHome() {
   if (currentUser.role === 'user') {
-    document.getElementById('vuAva').textContent = currentUser.name[0];
+    document.getElementById('vuAva').textContent  = currentUser.name[0];
     document.getElementById('vuName').textContent = currentUser.name.split(' ')[0];
     show('home-victim');
     checkNearbyAlerts();
-    // Poll for nearby alerts every 8s
     setInterval(checkNearbyAlerts, 8000);
   } else if (currentUser.role === 'medic') {
-    document.getElementById('mmAva').textContent = currentUser.name[0];
+    document.getElementById('mmAva').textContent  = currentUser.name[0];
     document.getElementById('mmName').textContent = currentUser.name.split(' ')[0];
     show('home-medic');
+    refreshMedicTracker();
   } else if (currentUser.role === 'admin') {
     show('admin-screen');
     loadAdminData();
   }
 }
-
 function goHomeFromMap() {
   if (currentUser?.role === 'medic') show('home-medic');
   else show('home-victim');
 }
 
 // ═══════════════════════════════════════════════════════════
-//  REGISTER
+//  REGISTER — no password, no login required
 // ═══════════════════════════════════════════════════════════
 function pickRole(role) {
   selectedRole = role;
-  document.getElementById('rc-user').classList.toggle('sel', role === 'user');
+  document.getElementById('rc-user').classList.toggle('sel',  role === 'user');
   document.getElementById('rc-medic').classList.toggle('sel', role === 'medic');
   document.getElementById('medicTypeRow').classList.toggle('hidden', role !== 'medic');
 }
@@ -1037,21 +1141,37 @@ function toggleType(el) {
     ? selectedMedicTypes.filter(x => x !== t)
     : [...selectedMedicTypes, t];
 }
-
 function doRegister() {
-  const name   = v('rName'), phone  = v('rPhone'),
-        parent = v('rParent'), pass = v('rPass');
+  const name   = v('rName');
+  const phone  = v('rPhone');
+  const parent = v('rParent');
   const errEl  = document.getElementById('regErr');
 
-  if (!name || !phone || !parent || !pass || !selectedRole) { errEl.classList.add('on'); errEl.textContent = 'Please fill in all fields and select a role.'; return; }
-  if (pass.length < 6) { errEl.classList.add('on'); errEl.textContent = 'Password must be at least 6 characters.'; return; }
-  if (selectedRole === 'medic' && !selectedMedicTypes.length) { errEl.classList.add('on'); errEl.textContent = 'Please select at least one medic type.'; return; }
+  if (!name || !phone || !selectedRole) {
+    errEl.classList.add('on');
+    errEl.textContent = 'Please enter your name, phone and select a role.';
+    return;
+  }
+  if (selectedRole === 'medic' && !selectedMedicTypes.length) {
+    errEl.classList.add('on');
+    errEl.textContent = 'Please select at least one medic type.';
+    return;
+  }
 
   const users = LS.users();
-  if (users.find(u => u.phone === phone)) { errEl.classList.add('on'); errEl.textContent = 'Phone number already registered.'; return; }
+  // If phone already exists → auto-login (no password needed)
+  const existing = users.find(u => u.phone === phone);
+  if (existing) {
+    LS.setMe(existing);
+    currentUser = existing;
+    errEl.classList.remove('on');
+    toast(`Welcome back, ${existing.name.split(' ')[0]}! 👋`, 's');
+    goHome();
+    return;
+  }
 
   const user = {
-    id: `u_${Date.now()}`, name, phone, parent, pass,
+    id: `u_${Date.now()}`, name, phone, parent,
     role: selectedRole,
     medicTypes: selectedRole === 'medic' ? [...selectedMedicTypes] : [],
     lat: userLoc.lat, lng: userLoc.lng,
@@ -1059,9 +1179,7 @@ function doRegister() {
   };
   users.push(user);
   LS.setUsers(users);
-
-  // Sync to Firebase if configured
-  if (firebaseReady) db.ref(`users/${user.id}`).set({ ...user, pass: null }); // don't store pass in Firebase
+  if (firebaseReady) db.ref(`users/${user.id}`).set(user);
 
   LS.setMe(user);
   currentUser = user;
@@ -1070,23 +1188,14 @@ function doRegister() {
   goHome();
 }
 
-// ═══════════════════════════════════════════════════════════
-//  LOGIN
-// ═══════════════════════════════════════════════════════════
-function doLogin() {
-  const phone = v('lPhone'), pass = v('lPass');
-  const users = LS.users();
-  const user  = users.find(u => u.phone === phone && u.pass === pass);
-  if (!user) { document.getElementById('loginErr').classList.add('on'); return; }
-  document.getElementById('loginErr').classList.remove('on');
-  LS.setMe(user);
-  currentUser = user;
-  toast(`Welcome back, ${user.name.split(' ')[0]}!`, 's');
-  goHome();
-}
-
 function doLogout() {
   if (sosActive) cancelSOS();
+  if (medicSosActive) cancelMedicSOS();
+  // Mark medic offline in tracker
+  if (currentUser?.role === 'medic') {
+    setTrackerStatus({ online: false, status: 'offline', responding: false, sosCritical: false });
+    if (channel) channel.postMessage({ type: 'MEDIC_STATUS' });
+  }
   LS.clearMe();
   currentUser = null;
   show('splash');
@@ -1103,10 +1212,8 @@ function handlePhoto(e) {
     const p = document.getElementById('photoPreview');
     p.src = photoDataURL; p.classList.add('on');
     toast('Photo attached 📷', 's');
-    // If SOS already active, update alert with photo
     if (sosActive && currentAlertId) {
-      const alerts = LS.alerts();
-      const a = alerts.find(x => x.id === currentAlertId);
+      const alerts = LS.alerts(), a = alerts.find(x => x.id === currentAlertId);
       if (a) { a.photo = photoDataURL; LS.setAlerts(alerts); }
     }
   };
@@ -1114,7 +1221,7 @@ function handlePhoto(e) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  SOS — TRIGGER
+//  SOS — VICTIM TRIGGER  (sends parent alert)
 // ═══════════════════════════════════════════════════════════
 function triggerSOS() {
   if (sosActive) return;
@@ -1125,8 +1232,8 @@ function triggerSOS() {
 
   const alert = {
     id: alertId,
-    victimId: currentUser.id,
-    victimName: currentUser.name,
+    victimId:    currentUser.id,
+    victimName:  currentUser.name,
     victimPhone: currentUser.phone,
     parentPhone: currentUser.parent,
     lat: userLoc.lat, lng: userLoc.lng,
@@ -1136,30 +1243,25 @@ function triggerSOS() {
     createdAt: Date.now(),
     responders: [],
     notifiedCount: 0,
+    isVictimSOS: true,   // ← key flag: parent gets alerted only for victim SOS
   };
 
-  // Save locally
   const alerts = LS.alerts();
   alerts.push(alert);
   LS.setAlerts(alerts);
-
-  // Save to Firebase if ready
   if (firebaseReady) db.ref(`alerts/${alertId}`).set(alert);
-
-  // Broadcast to all open tabs/windows (real multi-user simulation)
   if (channel) channel.postMessage({ type: 'NEW_ALERT', data: alert });
 
-  // Update UI
+  // UI
   document.getElementById('sosBtn').classList.add('firing');
   document.getElementById('sos-text').textContent = '🔴';
-  document.getElementById('sos-sub').textContent = 'ACTIVE';
+  document.getElementById('sos-sub').textContent  = 'ACTIVE';
   document.getElementById('sos-hint').textContent = '🚨 Responders are being alerted…';
   document.getElementById('vu-status-pill').className = 'status-pill sp-alert';
   document.getElementById('vu-status-txt').textContent = 'SOS Active · Help is coming';
   document.getElementById('activeCard').classList.remove('hidden');
   document.getElementById('photo-box').classList.add('hidden');
 
-  // Timer
   elapsedSecs = 0;
   sosTimerInterval = setInterval(() => {
     elapsedSecs++;
@@ -1167,29 +1269,126 @@ function triggerSOS() {
     if (el) el.textContent = elapsedSecs < 60 ? elapsedSecs + 's' : Math.floor(elapsedSecs/60) + 'm';
   }, 1000);
 
-  // Send SMS (simulated + real if endpoint configured)
-  sendSMS(currentUser.parent, `🚨 EMERGENCY: ${currentUser.name} has pressed SOS! Location: https://maps.google.com/?q=${userLoc.lat},${userLoc.lng}`);
+  // ── PARENT ALERT — victim SOS only ──────────────────────────────────────
+  if (currentUser.parent) {
+    sendSMS(currentUser.parent,
+      `🚨 EMERGENCY: ${currentUser.name} pressed SOS! Location: https://maps.google.com/?q=${userLoc.lat},${userLoc.lng}`);
+    // Show parent-alert overlay to the victim confirming SMS sent
+    showParentAlertOverlay();
+  }
 
-  // Dispatch alerts to nearby medics
   dispatchToNearbyMedics(alertId);
-
-  toast('🚨 SOS sent! SMS dispatched to parent.', 'e');
-  setTimeout(() => toast(`📍 Location shared: ${userLoc.text}`, 'i'), 1200);
-
-  // Listen for responder updates via Firebase
+  toast('🚨 SOS sent! Parent notified.', 'e');
+  setTimeout(() => toast(`📍 Location: ${userLoc.text}`, 'i'), 1200);
   if (firebaseReady) listenAlertUpdates(alertId);
 }
 
+// ── Parent overlay (victim-side confirmation) ──────────────────────────────
+function showParentAlertOverlay() {
+  document.getElementById('pac-parent').textContent = currentUser.parent || '—';
+  document.getElementById('pac-loc').textContent    = userLoc.text;
+  document.getElementById('pac-time').textContent   = new Date().toLocaleTimeString();
+  document.getElementById('parentAlertOverlay').classList.add('show');
+}
+function closeParentOverlay() {
+  document.getElementById('parentAlertOverlay').classList.remove('show');
+}
+
+function cancelSOS() {
+  if (!sosActive) return;
+  sosActive = false;
+  clearInterval(sosTimerInterval);
+
+  const alerts = LS.alerts(), a = alerts.find(x => x.id === currentAlertId);
+  if (a) { a.status = 'cancelled'; LS.setAlerts(alerts); }
+  if (firebaseReady) db.ref(`alerts/${currentAlertId}/status`).set('cancelled');
+  if (channel) channel.postMessage({ type: 'ALERT_CANCELLED', data: { id: currentAlertId } });
+
+  document.getElementById('sosBtn').classList.remove('firing');
+  document.getElementById('sos-text').textContent = 'SOS';
+  document.getElementById('sos-sub').textContent  = 'PRESS';
+  document.getElementById('sos-hint').textContent = 'Press SOS to alert nearby medics & ambulances';
+  document.getElementById('vu-status-pill').className = 'status-pill sp-safe';
+  document.getElementById('vu-status-txt').textContent = 'Safe · No Active Alert';
+  document.getElementById('activeCard').classList.add('hidden');
+  document.getElementById('photo-box').classList.remove('hidden');
+  document.getElementById('respWrap').innerHTML = '';
+  document.getElementById('ac-notified').textContent = '0';
+  document.getElementById('ac-accepted').textContent = '0';
+  elapsedSecs = 0;
+  toast('SOS cancelled.', 'i');
+}
+
 // ═══════════════════════════════════════════════════════════
-//  REAL-TIME DISPATCH TO NEARBY MEDICS
+//  MEDIC SOS — for when medic is in critical danger
+//  NOTE: NO parent notification sent for medic SOS
+// ═══════════════════════════════════════════════════════════
+function triggerMedicSOS() {
+  if (medicSosActive) return;
+  medicSosActive = true;
+
+  const sosId = `medic_sos_${Date.now()}`;
+  currentMedicSosId = sosId;
+
+  const alert = {
+    id: sosId,
+    victimId:    currentUser.id,
+    victimName:  `🧑‍⚕️ ${currentUser.name} (Medic)`,
+    victimPhone: currentUser.phone,
+    parentPhone: '',           // ← empty: no parent alert for medic SOS
+    lat: userLoc.lat, lng: userLoc.lng,
+    locationText: userLoc.text,
+    photo: null,
+    status: 'active',
+    createdAt: Date.now(),
+    responders: [],
+    notifiedCount: 0,
+    isVictimSOS: false,        // ← FALSE: suppress parent alert in acceptAlert
+    isMedicSOS: true,
+  };
+
+  const alerts = LS.alerts();
+  alerts.push(alert);
+  LS.setAlerts(alerts);
+  if (channel) channel.postMessage({ type: 'NEW_ALERT', data: alert });
+
+  // Update tracker to show this medic is in critical danger
+  setTrackerStatus({ sosCritical: true, status: 'sos' });
+  if (channel) channel.postMessage({ type: 'MEDIC_STATUS' });
+
+  // UI
+  document.getElementById('medicSosBtn').classList.add('firing');
+  document.getElementById('medicSosBar').classList.add('show');
+
+  toast('🆘 Medic SOS sent to all nearby medics!', 'e');
+  // No parent SMS — medic SOS is internal only
+}
+
+function cancelMedicSOS() {
+  if (!medicSosActive) return;
+  medicSosActive = false;
+
+  const alerts = LS.alerts(), a = alerts.find(x => x.id === currentMedicSosId);
+  if (a) { a.status = 'cancelled'; LS.setAlerts(alerts); }
+  if (channel) channel.postMessage({ type: 'ALERT_CANCELLED', data: { id: currentMedicSosId } });
+
+  setTrackerStatus({ sosCritical: false, status: isOnline ? 'online' : 'offline' });
+  if (channel) channel.postMessage({ type: 'MEDIC_STATUS' });
+
+  document.getElementById('medicSosBtn').classList.remove('firing');
+  document.getElementById('medicSosBar').classList.remove('show');
+  toast('Medic SOS cancelled.', 'i');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DISPATCH TO NEARBY MEDICS
 // ═══════════════════════════════════════════════════════════
 function dispatchToNearbyMedics(alertId) {
-  const users = LS.users();
+  const users  = LS.users();
   const medics = users.filter(u => u.role === 'medic');
 
-  // Notify medics in expanding radius waves
   const waves = [
-    { range: 1, delay: 500 },
+    { range: 1, delay: 500  },
     { range: 2, delay: 2500 },
     { range: 3, delay: 4500 },
     { range: 5, delay: 7000 },
@@ -1198,46 +1397,41 @@ function dispatchToNearbyMedics(alertId) {
   let totalNotified = 0;
   waves.forEach(({ range, delay }) => {
     setTimeout(() => {
-      const inRange = medics.filter(m => haversine(userLoc.lat, userLoc.lng, m.lat || userLoc.lat, m.lng || userLoc.lng + Math.random()*0.02) < range);
+      const inRange = medics.filter(m =>
+        haversine(userLoc.lat, userLoc.lng, m.lat || userLoc.lat, m.lng || userLoc.lng + Math.random()*0.02) < range);
       totalNotified += inRange.length;
       const notified = Math.max(totalNotified, range === 1 ? Math.min(medics.length,2) : Math.min(medics.length,range+1));
       const acEl = document.getElementById('ac-notified');
       if (acEl) acEl.textContent = notified;
       toast(`📡 ${notified} medic(s) within ${range}km notified`, 'i');
-
-      // Update stored
-      const alerts = LS.alerts();
-      const a = alerts.find(x => x.id === alertId);
+      const alerts = LS.alerts(), a = alerts.find(x => x.id === alertId);
       if (a) { a.notifiedCount = notified; LS.setAlerts(alerts); }
-      if (firebaseReady) db.ref(`alerts/${alertId}/notifiedCount`).set(notified);
     }, delay);
   });
 
-  // Simulate ambulance accepting at 5s
   setTimeout(() => {
     if (!sosActive) return;
-    addResponder(alertId, { name: 'City Ambulance #3', role: 'Ambulance Unit', type: 'ambulance', status: 'enroute', eta: '4 min' });
+    addResponder(alertId, { name:'City Ambulance #3', role:'Ambulance Unit', type:'ambulance', status:'enroute', eta:'4 min' });
     toast('🚑 Ambulance #3 is on the way!', 's');
-    sendSMS(currentUser.parent, `✅ An ambulance has accepted and is heading to ${currentUser.name}. Track: Active`);
+    // Ambulance update also goes to parent (isVictimSOS alert)
+    sendSMS(currentUser.parent, `✅ Ambulance dispatched to ${currentUser.name}. ETA ~4 min.`);
   }, 5000);
 
-  // Simulate medic accepting at 8s
   setTimeout(() => {
     if (!sosActive) return;
-    const medic = medics[0] || { name: 'Dr. Priya Reddy', medicTypes: ['doctor'] };
-    addResponder(alertId, { name: medic.name, role: (medic.medicTypes||['volunteer']).join(', '), type: 'medic', status: 'onway', eta: '2 min' });
+    const medic = medics[0] || { name:'Dr. Priya Reddy', medicTypes:['doctor'] };
+    addResponder(alertId, { name:medic.name, role:(medic.medicTypes||['volunteer']).join(', '), type:'medic', status:'onway', eta:'2 min' });
     toast(`🧑‍⚕️ ${medic.name} is on the way!`, 's');
   }, 8000);
 }
 
 function addResponder(alertId, responder) {
-  const alerts = LS.alerts();
-  const a = alerts.find(x => x.id === alertId);
+  const alerts = LS.alerts(), a = alerts.find(x => x.id === alertId);
   if (a) { a.responders.push(responder); LS.setAlerts(alerts); }
   if (firebaseReady) db.ref(`alerts/${alertId}/responders`).push(responder);
 
   const accepted = document.getElementById('ac-accepted');
-  if (accepted) accepted.textContent = parseInt(accepted.textContent || '0') + 1;
+  if (accepted) accepted.textContent = parseInt(accepted.textContent||'0') + 1;
 
   const wrap = document.getElementById('respWrap');
   if (!wrap) return;
@@ -1254,91 +1448,158 @@ function addResponder(alertId, responder) {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  FIREBASE REAL-TIME LISTENER (for multi-user sync)
+//  FIREBASE LISTENER
 // ═══════════════════════════════════════════════════════════
 function listenAlertUpdates(alertId) {
   if (!firebaseReady) return;
   const ref = db.ref(`alerts/${alertId}`);
-  ref.on('value', snap => {
-    const data = snap.val();
-    if (!data) return;
-    refreshAlertCard(data);
-  });
+  ref.on('value', snap => { const d = snap.val(); if (d) refreshAlertCard(d); });
   alertListeners[alertId] = ref;
 }
-
 function refreshAlertCard(data) {
-  const notifiedEl = document.getElementById('ac-notified');
-  if (notifiedEl && data.notifiedCount) notifiedEl.textContent = data.notifiedCount;
+  const el = document.getElementById('ac-notified');
+  if (el && data.notifiedCount) el.textContent = data.notifiedCount;
 }
 
 // ═══════════════════════════════════════════════════════════
-//  CANCEL SOS
-// ═══════════════════════════════════════════════════════════
-function cancelSOS() {
-  if (!sosActive) return;
-  sosActive = false;
-  clearInterval(sosTimerInterval);
-
-  const alerts = LS.alerts();
-  const a = alerts.find(x => x.id === currentAlertId);
-  if (a) { a.status = 'cancelled'; LS.setAlerts(alerts); }
-  if (firebaseReady) db.ref(`alerts/${currentAlertId}/status`).set('cancelled');
-  if (channel) channel.postMessage({ type: 'ALERT_CANCELLED', data: { id: currentAlertId } });
-
-  // Reset UI
-  document.getElementById('sosBtn').classList.remove('firing');
-  document.getElementById('sos-text').textContent = 'SOS';
-  document.getElementById('sos-sub').textContent = 'PRESS';
-  document.getElementById('sos-hint').textContent = 'Press SOS to alert nearby medics & ambulances';
-  document.getElementById('vu-status-pill').className = 'status-pill sp-safe';
-  document.getElementById('vu-status-txt').textContent = 'Safe · No Active Alert';
-  document.getElementById('activeCard').classList.add('hidden');
-  document.getElementById('photo-box').classList.remove('hidden');
-  document.getElementById('respWrap').innerHTML = '';
-  document.getElementById('ac-notified').textContent = '0';
-  document.getElementById('ac-accepted').textContent = '0';
-  elapsedSecs = 0;
-  toast('SOS cancelled.', 'i');
-}
-
-// ═══════════════════════════════════════════════════════════
-//  CHECK NEARBY ALERTS (for user to see there are other alerts)
+//  CHECK NEARBY ALERTS (user side)
 // ═══════════════════════════════════════════════════════════
 function checkNearbyAlerts() {
-  const alerts = LS.alerts().filter(a => a.status === 'active' && a.victimId !== currentUser?.id);
+  const alerts = LS.alerts().filter(a => a.status==='active' && a.victimId!==currentUser?.id);
   const notice = document.getElementById('nearby-alerts-notice');
   if (!notice) return;
   if (alerts.length > 0) {
     notice.classList.remove('hidden');
     document.getElementById('nearby-count').textContent = alerts.length;
-  } else {
-    notice.classList.add('hidden');
-  }
+  } else notice.classList.add('hidden');
 }
 
 // ═══════════════════════════════════════════════════════════
-//  MEDIC — ONLINE TOGGLE
+//  MEDIC TRACKER — set + refresh
+// ═══════════════════════════════════════════════════════════
+function setTrackerStatus(patch) {
+  const t = LS.tracker();
+  t[currentUser.id] = {
+    ...( t[currentUser.id] || {} ),
+    id:         currentUser.id,
+    name:       currentUser.name,
+    medicTypes: currentUser.medicTypes || [],
+    lat:        userLoc.lat,
+    lng:        userLoc.lng,
+    updatedAt:  Date.now(),
+    ...patch
+  };
+  LS.setTracker(t);
+}
+
+function refreshMedicTracker() {
+  const tracker = LS.tracker();
+  const users   = LS.users().filter(u => u.role === 'medic');
+  const listEl  = document.getElementById('medic-tracker-list');
+  const pillEl  = document.getElementById('tracker-pill');
+  if (!listEl) return;
+
+  if (!users.length) {
+    listEl.innerHTML = '<div class="empty"><div class="empty-icon">🧑‍⚕️</div><div class="empty-text">No medics registered yet.</div></div>';
+    return;
+  }
+
+  let onlineCount = 0;
+  const rows = users.map(u => {
+    const st = tracker[u.id] || {};
+    const online      = !!st.online;
+    const responding  = !!st.responding;
+    const sosCritical = !!st.sosCritical;
+
+    if (online) onlineCount++;
+
+    let cardCls, avaCls, statusCls, statusTxt, badgeCls, badgeTxt;
+
+    if (sosCritical) {
+      cardCls   = 'tracker-card tc-sos';
+      avaCls    = 'tc-avatar tc-av-sos';
+      statusCls = 'tc-status tcs-sos';
+      statusTxt = '🆘 SOS — Needs help!';
+      badgeCls  = 'tc-badge tcb-sos';
+      badgeTxt  = 'SOS';
+    } else if (responding) {
+      cardCls   = 'tracker-card tc-responding';
+      avaCls    = 'tc-avatar tc-av-online';
+      statusCls = 'tc-status tcs-resp';
+      statusTxt = 'Responding to alert';
+      badgeCls  = 'tc-badge tcb-resp';
+      badgeTxt  = 'RESP';
+    } else if (online) {
+      cardCls   = 'tracker-card tc-online';
+      avaCls    = 'tc-avatar tc-av-online';
+      statusCls = 'tc-status tcs-on';
+      statusTxt = 'Online · Available';
+      badgeCls  = 'tc-badge tcb-on';
+      badgeTxt  = 'ONLINE';
+    } else {
+      cardCls   = 'tracker-card';
+      avaCls    = 'tc-avatar tc-av-offline';
+      statusCls = 'tc-status tcs-off';
+      statusTxt = 'Offline';
+      badgeCls  = 'tc-badge tcb-off';
+      badgeTxt  = 'OFFLINE';
+    }
+
+    const dist = st.lat
+      ? haversine(userLoc.lat, userLoc.lng, st.lat, st.lng)
+      : null;
+    const distStr = dist !== null
+      ? (dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km')
+      : '';
+
+    const emoji = sosCritical ? '🆘' : online ? '🟢' : '⚫';
+
+    return `
+    <div class="${cardCls}">
+      <div class="${avaCls}">${emoji}</div>
+      <div class="tc-info">
+        <div class="tc-name">${u.name}</div>
+        <div class="tc-role">${(u.medicTypes||[]).join(', ') || 'Volunteer'}</div>
+        <div class="${statusCls}">${statusTxt}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.25rem;">
+        <div class="${badgeCls}">${badgeTxt}</div>
+        ${distStr ? `<div style="font-size:.63rem;color:var(--muted2);">${distStr}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.innerHTML = rows;
+  if (pillEl) pillEl.textContent = `${onlineCount} online`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEDIC ONLINE TOGGLE
 // ═══════════════════════════════════════════════════════════
 function toggleOnline() {
   isOnline = !isOnline;
   document.getElementById('onlineSw').classList.toggle('on', isOnline);
   const lbl = document.getElementById('ol-lbl');
-  lbl.textContent = isOnline ? 'ONLINE' : 'OFFLINE';
-  lbl.className = isOnline ? 'olabel on' : 'olabel off';
+  lbl.textContent  = isOnline ? 'ONLINE' : 'OFFLINE';
+  lbl.className    = isOnline ? 'olabel on' : 'olabel off';
+
+  setTrackerStatus({ online: isOnline, status: isOnline ? 'online' : 'offline', responding: false });
+  if (channel) channel.postMessage({ type: 'MEDIC_STATUS' });
+  refreshMedicTracker();
 
   if (isOnline) {
     toast('You are online 🟢', 's');
     loadMedicAlerts();
-    // Subscribe to Firebase alerts
     if (firebaseReady) {
       db.ref('alerts').orderByChild('status').equalTo('active').on('child_added', snap => {
         loadMedicAlerts();
-        toast('🚨 New alert!', 'e');
+        showAlertPopupToMedic(snap.val());
+        injectAlertBanner(snap.val());
       });
     }
-    // Poll localStorage every 6s (for multi-tab without Firebase)
-    window._medicPoll = setInterval(() => isOnline && loadMedicAlerts(), 6000);
+    window._medicPoll = setInterval(() => {
+      if (isOnline) { loadMedicAlerts(); refreshMedicTracker(); }
+    }, 6000);
   } else {
     clearInterval(window._medicPoll);
     toast('You are offline.', 'i');
@@ -1354,57 +1615,132 @@ function setRange(km, el) {
   if (isOnline) loadMedicAlerts();
 }
 
+// ═══════════════════════════════════════════════════════════
+//  LOAD MEDIC ALERT LIST
+// ═══════════════════════════════════════════════════════════
 function loadMedicAlerts() {
   if (!isOnline) return;
   const alerts = LS.alerts().filter(a => a.status === 'active');
-  const listEl = document.getElementById('m-alert-list');
+  const listEl  = document.getElementById('m-alert-list');
   document.getElementById('m-badge').textContent = alerts.length;
 
   if (!alerts.length) {
-    listEl.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No active alerts in your range right now.</div></div>';
+    listEl.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No active alerts in your range.</div></div>';
     return;
   }
 
   listEl.innerHTML = alerts.map(a => {
-    const dist = haversine(userLoc.lat, userLoc.lng, a.lat, a.lng);
+    const dist    = haversine(userLoc.lat, userLoc.lng, a.lat, a.lng);
     if (dist > selectedRange) return '';
     const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
-    const mins = Math.ceil(dist * 3);
-    const timeAgo = getTimeAgo(a.createdAt);
+    const mins    = Math.ceil(dist * 3);
+    const tag     = a.isMedicSOS ? '🆘' : '🚨';
+    const label   = a.isMedicSOS ? 'MEDIC SOS' : '';
     return `
     <div class="m-alert-card new" id="mac_${a.id}">
       <div class="mac-top">
         <div>
-          <div class="mac-name">🚨 ${a.victimName}</div>
-          <div class="mac-time">${timeAgo} · ~${mins} min walk</div>
+          <div class="mac-name">${tag} ${a.victimName}</div>
+          <div class="mac-time">${getTimeAgo(a.createdAt)} · ~${mins} min walk</div>
         </div>
-        <div class="mac-dist">${distStr}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
+          <div class="mac-dist">${distStr}</div>
+          ${label ? `<div style="font-size:.6rem;background:rgba(230,46,46,.12);color:var(--r);border-radius:3px;padding:.1rem .4rem;font-weight:800;">${label}</div>` : ''}
+        </div>
       </div>
       ${a.photo ? `<img class="mac-photo on" src="${a.photo}" alt="Scene">` : ''}
       <div class="mac-loc">📍 ${a.locationText}</div>
       <div class="mac-actions">
         <button class="btn-sm btn-sm-ghost" onclick="dismissMedicAlert('${a.id}')">Dismiss</button>
-        <button class="btn-sm btn-sm-red" onclick="openAlertModal('${a.id}','${distStr}')">View &amp; Respond →</button>
+        <button class="btn-sm btn-sm-red"   onclick="openAlertModal('${a.id}','${distStr}')">View &amp; Respond →</button>
       </div>
     </div>`;
   }).join('');
-  if (!listEl.innerHTML.trim()) listEl.innerHTML = '<div class="empty"><div class="empty-icon">📍</div><div class="empty-text">No alerts within '+selectedRange+'km range.</div></div>';
+
+  if (!listEl.innerHTML.trim())
+    listEl.innerHTML = `<div class="empty"><div class="empty-icon">📍</div><div class="empty-text">No alerts within ${selectedRange}km range.</div></div>`;
 }
 
 function dismissMedicAlert(id) {
   const el = document.getElementById('mac_' + id);
-  if (el) { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }
+  if (el) { el.style.opacity='0'; el.style.transform='translateX(30px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); }
 }
 
+// ═══════════════════════════════════════════════════════════
+//  ALERT POPUP — shown to medic on new incoming SOS
+// ═══════════════════════════════════════════════════════════
+function showAlertPopupToMedic(alert) {
+  if (!isOnline) return;
+  popupAlertId = alert.id;
+  const dist    = haversine(userLoc.lat, userLoc.lng, alert.lat, alert.lng);
+  const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
+
+  document.getElementById('apc-title').textContent  = alert.isMedicSOS ? '🆘 MEDIC SOS' : '🚨 SOS ALERT';
+  document.getElementById('apc-sub').textContent    = alert.isMedicSOS
+    ? 'A fellow medic is in critical danger!'
+    : 'Someone nearby needs emergency help!';
+  document.getElementById('apc-victim').textContent = alert.victimName;
+  document.getElementById('apc-loc').textContent    = alert.locationText;
+  document.getElementById('apc-dist').textContent   = distStr + ' away';
+  document.getElementById('apc-time').textContent   = new Date(alert.createdAt).toLocaleTimeString();
+  document.getElementById('alertPopupOverlay').classList.add('show');
+
+  // Auto-dismiss after 20 s if no action
+  setTimeout(() => dismissAlertPopup(), 20000);
+}
+function dismissAlertPopup() {
+  document.getElementById('alertPopupOverlay').classList.remove('show');
+}
+function respondFromPopup() {
+  dismissAlertPopup();
+  if (popupAlertId) {
+    const a = LS.alerts().find(x => x.id === popupAlertId);
+    if (a) {
+      const dist    = haversine(userLoc.lat, userLoc.lng, a.lat, a.lng);
+      const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
+      openAlertModal(popupAlertId, distStr);
+    }
+  }
+}
+
+// ── Persistent banner (stays in medic list even after popup gone) ──────────
+function injectAlertBanner(alert) {
+  const wrap = document.getElementById('alert-banners-wrap');
+  if (!wrap || !isOnline) return;
+  if (document.getElementById('anb_' + alert.id)) return; // already shown
+
+  const dist    = haversine(userLoc.lat, userLoc.lng, alert.lat, alert.lng);
+  const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
+
+  const div = document.createElement('div');
+  div.id        = 'anb_' + alert.id;
+  div.className = 'alert-notif-banner';
+  div.innerHTML = `
+    <div class="anb-top">
+      <div class="anb-title">${alert.isMedicSOS ? '🆘 MEDIC SOS' : '🚨 NEW SOS ALERT'}</div>
+      <button class="anb-close" onclick="this.closest('.alert-notif-banner').remove()">✕</button>
+    </div>
+    <div class="anb-victim">${alert.victimName}</div>
+    <div class="anb-loc">📍 ${alert.locationText} &nbsp;·&nbsp; ${distStr} away</div>
+    <div class="anb-actions">
+      <button class="btn-sm btn-sm-ghost" onclick="this.closest('.alert-notif-banner').remove()">Dismiss</button>
+      <button class="btn-sm btn-sm-red"   onclick="openAlertModal('${alert.id}','${distStr}')">Respond →</button>
+    </div>`;
+  wrap.prepend(div);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ALERT MODAL (medic reviews + accepts/declines)
+// ═══════════════════════════════════════════════════════════
 function openAlertModal(alertId, dist) {
   const a = LS.alerts().find(x => x.id === alertId);
   if (!a) return;
   currentAlertForModal = { ...a, dist };
-  document.getElementById('am-sub').textContent = 'Emergency · ' + getTimeAgo(a.createdAt);
+  document.getElementById('am-sub').textContent    = 'Emergency · ' + getTimeAgo(a.createdAt);
   document.getElementById('am-victim').textContent = a.victimName;
-  document.getElementById('am-phone').textContent = '📞 ' + a.victimPhone;
-  document.getElementById('am-loc').textContent = '📍 ' + a.locationText;
-  document.getElementById('am-dist').textContent = '📏 ' + dist + ' away';
+  document.getElementById('am-phone').textContent  = '📞 ' + a.victimPhone;
+  document.getElementById('am-loc').textContent    = '📍 ' + a.locationText;
+  document.getElementById('am-dist').textContent   = '📏 ' + dist + ' away';
   const ph = document.getElementById('am-photo');
   if (a.photo) { ph.src = a.photo; ph.style.display = 'block'; }
   else ph.style.display = 'none';
@@ -1416,35 +1752,42 @@ function acceptAlert() {
   if (!currentAlertForModal) return;
   const alertId = currentAlertForModal.id;
 
-  // Add this medic as responder
-  const alerts = LS.alerts();
-  const a = alerts.find(x => x.id === alertId);
+  const alerts = LS.alerts(), a = alerts.find(x => x.id === alertId);
   if (a) {
-    const resp = { name: currentUser.name, role: (currentUser.medicTypes||[]).join(', ')||'Volunteer', type:'medic', status:'onway', eta:'~3 min' };
+    const resp = { name:currentUser.name, role:(currentUser.medicTypes||[]).join(', ')||'Volunteer', type:'medic', status:'onway', eta:'~3 min' };
     a.responders.push(resp);
     LS.setAlerts(alerts);
     if (firebaseReady) db.ref(`alerts/${alertId}/responders`).push(resp);
-    if (channel) channel.postMessage({ type: 'ALERT_UPDATE', data: a });
+    if (channel) channel.postMessage({ type:'ALERT_UPDATE', data:a });
   }
 
-  sendSMS(currentAlertForModal.parentPhone, `✅ ${currentUser.name} (${(currentUser.medicTypes||[]).join(', ')||'Volunteer'}) is responding to ${currentAlertForModal.victimName}'s emergency.`);
+  // Mark medic as "responding" in tracker
+  setTrackerStatus({ responding: true, status: 'responding' });
+  if (channel) channel.postMessage({ type: 'MEDIC_STATUS' });
+  refreshMedicTracker();
+
+  // ── Send parent SMS only if this is a victim-initiated SOS ──────────────
+  if (currentAlertForModal.isVictimSOS && currentAlertForModal.parentPhone) {
+    sendSMS(currentAlertForModal.parentPhone,
+      `✅ ${currentUser.name} (${(currentUser.medicTypes||[]).join(', ')||'Volunteer'}) is responding to ${currentAlertForModal.victimName}'s emergency.`);
+  }
+  // If isVictimSOS is false (bystander/helper-triggered or medic SOS) → NO parent SMS
+
   toast('✅ Alert accepted! Navigate to victim.', 's');
   toast(`📍 ${currentAlertForModal.locationText}`, 'i');
   dismissMedicAlert(alertId);
+  document.getElementById('anb_' + alertId)?.remove();
 
-  // Open map to victim location
   setTimeout(() => { show('map-screen'); initMap(currentAlertForModal.lat, currentAlertForModal.lng); }, 800);
 }
 
 function declineAlert() { closeModal('alertModal'); toast('Alert declined.', 'i'); }
 
 // ═══════════════════════════════════════════════════════════
-//  SMS SENDER (real backend integration)
+//  SMS
 // ═══════════════════════════════════════════════════════════
 async function sendSMS(to, message) {
   console.log(`📱 SMS → ${to}: ${message}`);
-  // Simulated (shows in console)
-  // For real SMS, uncomment and configure your Twilio endpoint:
   /*
   try {
     await fetch(TWILIO_ENDPOINT, {
@@ -1464,38 +1807,39 @@ function initMap(targetLat, targetLng) {
   const lng = targetLng || userLoc.lng;
 
   if (!leafletMap) {
-    leafletMap = L.map('leaflet-map', { zoomControl: true, attributionControl: false }).setView([lat, lng], 15);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-    }).addTo(leafletMap);
-  } else {
-    leafletMap.setView([lat, lng], 15);
-  }
+    leafletMap = L.map('leaflet-map', { zoomControl:true, attributionControl:false }).setView([lat,lng],15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom:19 }).addTo(leafletMap);
+  } else leafletMap.setView([lat,lng],15);
 
-  // Victim marker
   if (victimMarker) victimMarker.remove();
-  victimMarker = L.marker([lat, lng], {
+  victimMarker = L.marker([lat,lng], {
     icon: L.divIcon({ html:'<div style="font-size:1.5rem;filter:drop-shadow(0 0 8px rgba(230,46,46,.8))">📍</div>', className:'', iconAnchor:[12,24] })
-  }).addTo(leafletMap).bindPopup(currentUser?.name || 'Victim Location').openPopup();
+  }).addTo(leafletMap).bindPopup(currentUser?.name||'Victim').openPopup();
 
-  // Ambulance marker (starts offset, moves toward victim)
-  const ambStartLat = lat - 0.015;
-  const ambStartLng = lng - 0.012;
+  const ambStartLat = lat - 0.015, ambStartLng = lng - 0.012;
   if (ambulanceMarker) ambulanceMarker.remove();
-  ambulanceMarker = L.marker([ambStartLat, ambStartLng], {
+  ambulanceMarker = L.marker([ambStartLat,ambStartLng], {
     icon: L.divIcon({ html:'<div style="font-size:1.5rem;filter:drop-shadow(0 0 8px rgba(59,130,246,.8))">🚑</div>', className:'', iconAnchor:[12,12] })
   }).addTo(leafletMap);
 
-  // Plot all active alert markers
-  LS.alerts().filter(a => a.status === 'active').forEach(a => {
+  LS.alerts().filter(a => a.status==='active').forEach(a => {
     if (a.id !== currentAlertId) {
-      L.marker([a.lat, a.lng], {
-        icon: L.divIcon({ html:'<div style="font-size:1.2rem;opacity:.8">🆘</div>', className:'', iconAnchor:[10,10] })
-      }).addTo(leafletMap).bindPopup(`🚨 ${a.victimName}`);
+      L.marker([a.lat,a.lng], {
+        icon: L.divIcon({ html:`<div style="font-size:1.2rem;opacity:.8">${a.isMedicSOS?'🆘':'🆘'}</div>`, className:'', iconAnchor:[10,10] })
+      }).addTo(leafletMap).bindPopup(`${a.isMedicSOS?'🆘 MEDIC':'🚨'} ${a.victimName}`);
     }
   });
 
-  // Animate ambulance toward victim
+  // Plot online medics on the map
+  const tracker = LS.tracker();
+  Object.values(tracker).forEach(st => {
+    if (st.online && st.lat && st.id !== currentUser?.id) {
+      L.marker([st.lat, st.lng], {
+        icon: L.divIcon({ html:`<div style="font-size:1.1rem;filter:drop-shadow(0 0 6px rgba(0,217,126,.7))">${st.sosCritical?'🆘':'🧑‍⚕️'}</div>`, className:'', iconAnchor:[10,10] })
+      }).addTo(leafletMap).bindPopup(`🧑‍⚕️ ${st.name} — ${st.sosCritical?'NEEDS HELP':'Online'}`);
+    }
+  });
+
   let step = 0; const steps = 80;
   clearInterval(ambInterval);
   ambInterval = setInterval(() => {
@@ -1505,7 +1849,7 @@ function initMap(targetLat, targetLng) {
     const curLng = ambStartLng + (lng - ambStartLng) * t;
     ambulanceMarker.setLatLng([curLat, curLng]);
     const distKm = haversine(curLat, curLng, lat, lng);
-    const eta = Math.ceil(distKm / 0.4);
+    const eta    = Math.ceil(distKm / 0.4);
     const el = document.getElementById('tc-eta');
     if (el) el.textContent = eta > 0 ? eta + ' min' : 'Arrived';
     const de = document.getElementById('tc-dist');
@@ -1513,13 +1857,12 @@ function initMap(targetLat, targetLng) {
     if (step >= steps) { clearInterval(ambInterval); toast('🚑 Ambulance arrived!', 's'); }
   }, 300);
 
-  // Update map alerts list
   updateMapAlertsList();
   leafletMap.invalidateSize();
 }
 
 function updateMapAlertsList() {
-  const active = LS.alerts().filter(a => a.status === 'active');
+  const active = LS.alerts().filter(a => a.status==='active');
   const el = document.getElementById('map-alerts-list');
   if (!el) return;
   if (!active.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted);padding:.5rem 0;">No active alerts</div>'; return; }
@@ -1547,14 +1890,13 @@ function doAdminLogin() {
   show('admin-screen');
   loadAdminData();
 }
-
 function loadAdminData() {
-  const users = LS.users();
-  const alerts = LS.alerts();
-  const medics = users.filter(u => u.role==='medic');
-  const active = alerts.filter(a => a.status==='active');
+  const users   = LS.users();
+  const alerts  = LS.alerts();
+  const medics  = users.filter(u => u.role==='medic');
+  const active  = alerts.filter(a => a.status==='active');
 
-  document.getElementById('a-users').textContent = users.filter(u=>u.role==='user').length;
+  document.getElementById('a-users').textContent  = users.filter(u=>u.role==='user').length;
   document.getElementById('a-medics').textContent = medics.length;
   document.getElementById('a-alerts').textContent = alerts.length;
   document.getElementById('a-active').textContent = active.length;
@@ -1576,6 +1918,7 @@ function loadAdminData() {
 function showUserProfile() {
   if (!currentUser) return;
   const myAlerts = LS.alerts().filter(a => a.victimId === currentUser.id);
+  const st       = LS.tracker()[currentUser.id] || {};
   document.getElementById('profile-content').innerHTML = `
     <div style="display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.83rem;">
       <span style="color:var(--muted2);">Name</span><strong>${currentUser.name}</strong>
@@ -1583,42 +1926,40 @@ function showUserProfile() {
       <span style="color:var(--muted2);">Parent</span><span>${currentUser.parent||'—'}</span>
       <span style="color:var(--muted2);">Role</span><span style="color:var(--r);font-weight:700;">${currentUser.role}</span>
       ${currentUser.medicTypes?.length ? `<span style="color:var(--muted2);">Type</span><span>${currentUser.medicTypes.join(', ')}</span>` : ''}
-      ${currentUser.role==='user' ? `<span style="color:var(--muted2);">SOS Count</span><span>${myAlerts.length}</span>` : ''}
+      ${currentUser.role==='user'  ? `<span style="color:var(--muted2);">SOS Count</span><span>${myAlerts.length}</span>` : ''}
+      ${currentUser.role==='medic' ? `<span style="color:var(--muted2);">Status</span><span style="color:var(--g);">${st.online?'🟢 Online':'⚫ Offline'}</span>` : ''}
+    </div>
+    <div style="margin-top:.9rem;padding:.65rem .8rem;background:rgba(0,217,126,.04);border:1px solid rgba(0,217,126,.12);border-radius:8px;font-size:.72rem;color:var(--muted2);line-height:1.6;">
+      ✅ No login required — your device remembers you automatically.
     </div>`;
   openModal('profileModal');
 }
 
 // ═══════════════════════════════════════════════════════════
-//  MODALS
+//  MODALS · TOAST · UTILS
 // ═══════════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open');    }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.querySelectorAll('.modal-wrap').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); });
 });
 
-// ═══════════════════════════════════════════════════════════
-//  TOAST
-// ═══════════════════════════════════════════════════════════
 function toast(msg, type='i') {
   const w = document.getElementById('toastWrap');
   const t = document.createElement('div');
-  t.className = `toast ${type}`;
+  t.className  = `toast ${type}`;
   t.textContent = msg;
   w.appendChild(t);
   setTimeout(() => t.remove(), 3200);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════════
 function v(id) { return document.getElementById(id)?.value.trim() || ''; }
 
 function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371;
+  const R    = 6371;
   const dLat = (lat2-lat1) * Math.PI/180;
   const dLon = (lon2-lon1) * Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  const a    = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
@@ -1629,5 +1970,44 @@ function getTimeAgo(ts) {
   return Math.floor(d/3600) + 'h ago';
 }
 </script>
+
+<!-- ══ INCOMING ALERT POPUP (shown to medic on new SOS) ══ -->
+<div class="alert-popup-overlay" id="alertPopupOverlay">
+  <div class="alert-popup-card">
+    <div class="apc-icon">🚨</div>
+    <div class="apc-title" id="apc-title">SOS ALERT</div>
+    <div class="apc-sub" id="apc-sub">Someone needs emergency help nearby</div>
+    <div class="apc-info">
+      <div class="apc-row"><span class="apc-lbl">Victim:</span><span class="apc-val" id="apc-victim">—</span></div>
+      <div class="apc-row"><span class="apc-lbl">Location:</span><span class="apc-val" id="apc-loc">—</span></div>
+      <div class="apc-row"><span class="apc-lbl">Distance:</span><span class="apc-val" id="apc-dist">—</span></div>
+      <div class="apc-row"><span class="apc-lbl">Time:</span><span class="apc-val" id="apc-time">—</span></div>
+    </div>
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn btn-outline" style="flex:1;font-size:.9rem;padding:.7rem;" onclick="dismissAlertPopup()">Later</button>
+      <button class="btn btn-red" style="flex:2;font-size:.9rem;padding:.7rem;" onclick="respondFromPopup()">Respond Now →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PARENT ALERT OVERLAY (shown when victim presses SOS) ══ -->
+<div class="parent-alert-overlay" id="parentAlertOverlay">
+  <div class="parent-alert-card">
+    <div class="pac-badge">🔔 Parent Alert</div>
+    <div class="pac-icon">🆘</div>
+    <div class="pac-title">SOS SENT</div>
+    <div class="pac-body">Your SOS has been sent to your parent/guardian and nearby medics have been alerted.</div>
+    <div class="pac-info">
+      <div class="pac-row"><span class="pac-lbl">Parent:</span><span class="pac-val" id="pac-parent">—</span></div>
+      <div class="pac-row"><span class="pac-lbl">Location:</span><span class="pac-val" id="pac-loc">—</span></div>
+      <div class="pac-row"><span class="pac-lbl">Time:</span><span class="pac-val" id="pac-time">—</span></div>
+    </div>
+    <div style="font-size:.72rem;color:rgba(230,46,46,.7);background:rgba(230,46,46,.06);border-radius:8px;padding:.6rem;margin-bottom:1rem;line-height:1.5;">
+      ⚠️ If a bystander (non-victim) tries to help, <strong>no parent notification will be sent</strong> for their identity.
+    </div>
+    <button class="btn btn-red" onclick="closeParentOverlay()">✓ Got it</button>
+  </div>
+</div>
+
 </body>
 </html>
