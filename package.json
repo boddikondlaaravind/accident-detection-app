@@ -1,0 +1,15 @@
+{
+  "name": "rapidaid-iot-relay",
+  "version": "1.0.0",
+  "description": "Tiny relay bridging hardware SOS triggers to the RapidAid webpage",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RapidAid — Live Emergency Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Leaflet Maps -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- MQTT.js — lets this page listen for alerts pushed from an IoT device -->
+<script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+
+<style>
+:root {
+  --r:#e62e2e; --rd:#b81e1e; --rg:rgba(230,46,46,0.3);
+  --g:#00d97e; --b:#3b82f6; --y:#f59e0b;
+  --bg:#080808; --bg2:#111; --bg3:#1a1a1a; --bg4:#222;
+  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.12);
+  --text:#f2f2f2; --muted:#666; --muted2:#999;
+  --font:'Space Grotesk',sans-serif;
+  --head:'Barlow Condensed',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font);}
+
+/* ── RESCUE MODE (active SOS background) ── */
+body.sos-live{ animation: sosBgPulse 2.4s ease-in-out infinite; }
+@keyframes sosBgPulse {
+  0%,100% { background: radial-gradient(ellipse at 50% -10%, rgba(230,46,46,.16) 0%, var(--bg) 55%); }
+  50% { background: radial-gradient(ellipse at 50% -10%, rgba(230,46,46,.38) 0%, var(--bg) 55%); }
+}
+
+/* ── SCREENS ── */
+.screen{display:none;height:100%;flex-direction:column;animation:fadeUp .3s ease;}
+.screen.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SPLASH ── */
+#splash{
+  align-items:center;justify-content:center;gap:0;
+  background:var(--bg);
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(255,255,255,0.015) 39px,rgba(255,255,255,0.015) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(255,255,255,0.015) 39px,rgba(255,255,255,0.015) 40px);
+  position:relative;overflow:hidden;padding:2rem;
+}
+.splash-glow{
+  position:absolute;width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(230,46,46,0.12) 0%,transparent 70%);
+  top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none;
+}
+.splash-logo{
+  font-family:var(--head);font-size:4rem;font-weight:800;
+  letter-spacing:-1px;text-align:center;line-height:1;
+  margin-bottom:0.2rem;position:relative;z-index:1;
+}
+.splash-logo em{color:var(--r);font-style:normal;}
+.splash-tagline{
+  font-size:0.82rem;color:var(--muted2);letter-spacing:0.15em;
+  text-transform:uppercase;margin-bottom:3rem;position:relative;z-index:1;
+}
+.splash-btns{
+  display:flex;flex-direction:column;gap:0.75rem;
+  width:100%;max-width:320px;position:relative;z-index:1;
+}
+.splash-note{
+  margin-top:1.5rem;font-size:0.72rem;color:var(--muted);
+  text-align:center;max-width:280px;line-height:1.6;position:relative;z-index:1;
+}
+
+/* ── SCROLLABLE CONTENT ── */
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px;}
+.scroll-body::-webkit-scrollbar{width:3px;}
+.scroll-body::-webkit-scrollbar-track{background:transparent;}
+.scroll-body::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:2px;}
+
+/* ── COMMON INPUTS ── */
+.auth-page{padding:1.5rem;overflow-y:auto;flex:1;}
+.auth-back{
+  display:inline-flex;align-items:center;gap:6px;
+  color:var(--muted2);font-size:0.85rem;cursor:pointer;
+  margin-bottom:1.5rem;transition:color .2s;
+}
+.auth-back:hover{color:var(--text);}
+.page-title{
+  font-family:var(--head);font-size:2.8rem;font-weight:800;
+  line-height:1;letter-spacing:-0.5px;margin-bottom:0.3rem;
+}
+.page-title em{color:var(--r);font-style:normal;}
+.page-sub{color:var(--muted2);font-size:0.85rem;line-height:1.6;margin-bottom:1.8rem;}
+
+.fgrp{margin-bottom:1rem;}
+.fgrp label{
+  display:block;font-size:0.7rem;font-weight:700;
+  color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem;
+}
+input[type=text],input[type=tel],input[type=password],select,textarea{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:10px;padding:.75rem 1rem;
+  color:var(--text);font-family:var(--font);font-size:.9rem;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 1rem center;}
+textarea{resize:vertical;min-height:60px;font-family:var(--font);}
+input:focus,select:focus,textarea:focus{border-color:rgba(230,46,46,.5);box-shadow:0 0 0 3px rgba(230,46,46,.08);}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+
+/* ── MEDICAL ID ── */
+.med-info-box{background:rgba(230,46,46,.06);border:1px solid rgba(230,46,46,.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;}
+.med-info-title{font-size:.68rem;color:var(--r);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;}
+.med-info-row{font-size:.8rem;color:var(--text);margin-top:.25rem;}
+.med-info-row b{color:var(--muted2);font-weight:700;}
+.med-edit-link{font-size:.72rem;color:var(--r);cursor:pointer;font-weight:700;margin-top:.5rem;display:inline-block;}
+
+/* ── MEDIC SELF-SOS BANNER ── */
+.med-self-sos{
+  display:flex;align-items:center;gap:.6rem;background:rgba(230,46,46,.1);
+  border:1px solid rgba(230,46,46,.3);border-radius:10px;padding:.7rem .9rem;
+  margin-bottom:1.2rem;font-size:.78rem;font-weight:700;color:var(--r);
+  cursor:pointer;line-height:1.3;
+}
+.med-self-sos:active{background:rgba(230,46,46,.18);}
+
+/* ── BACK TO VOLUNTEER MODE LINK ── */
+.back-to-volunteer{
+  display:flex;align-items:center;gap:.4rem;width:100%;max-width:380px;
+  font-size:.78rem;font-weight:700;color:var(--r);cursor:pointer;
+  margin-bottom:1rem;
+}
+
+/* ── ROLE CARDS ── */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.role-card{
+  background:var(--bg3);border:1.5px solid var(--border2);
+  border-radius:12px;padding:1.1rem;cursor:pointer;
+  transition:all .2s;text-align:center;
+}
+.role-card.sel{border-color:var(--r);background:rgba(230,46,46,.07);}
+.role-card .rc-icon{font-size:1.8rem;margin-bottom:.4rem;}
+.role-card .rc-name{font-size:.82rem;font-weight:700;}
+.role-card .rc-desc{font-size:.7rem;color:var(--muted2);margin-top:.2rem;}
+.role-card.sel .rc-name{color:var(--r);}
+
+/* ── MEDIC TYPE ── */
+.type-chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.5rem;}
+.tchip{
+  padding:.35rem .8rem;border-radius:20px;
+  border:1px solid var(--border2);font-size:.78rem;
+  cursor:pointer;transition:all .2s;background:var(--bg3);
+}
+.tchip.on{background:rgba(230,46,46,.12);border-color:var(--r);color:var(--r);}
+
+/* ── BUTTONS ── */
+.btn{
+  width:100%;padding:.85rem;border:none;border-radius:10px;
+  font-family:var(--head);font-size:1.1rem;font-weight:700;
+  letter-spacing:.03em;cursor:pointer;transition:all .2s;
+}
+.btn-red{background:var(--r);color:#fff;box-shadow:0 4px 20px var(--rg);}
+.btn-red:hover{background:var(--rd);transform:translateY(-1px);}
+.btn-red:active{transform:translateY(0);}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border2);}
+.btn-outline:hover{background:var(--bg3);}
+.btn-sm{
+  padding:.45rem 1rem;border:none;border-radius:8px;
+  font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.btn-sm-red{background:var(--r);color:#fff;}
+.btn-sm-green{background:var(--g);color:#000;}
+.btn-sm-ghost{background:var(--bg4);color:var(--muted2);border:1px solid var(--border);}
+
+/* ── ERR MSG ── */
+.err{
+  background:rgba(230,46,46,.08);border:1px solid rgba(230,46,46,.2);
+  border-radius:8px;padding:.6rem .9rem;font-size:.8rem;color:#ff8080;
+  margin-bottom:.9rem;display:none;
+}
+.err.on{display:block;}
+
+/* ── TOP NAV ── */
+.topnav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.9rem 1.2rem;background:rgba(8,8,8,.95);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
+  flex-shrink:0;position:relative;z-index:100;
+}
+.topnav-logo{font-family:var(--head);font-size:1.4rem;font-weight:800;letter-spacing:-.3px;}
+.topnav-logo em{color:var(--r);font-style:normal;}
+.topnav-right{display:flex;align-items:center;gap:.6rem;}
+.ava{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:700;flex-shrink:0;
+}
+.ava-user{background:rgba(230,46,46,.2);border:1.5px solid rgba(230,46,46,.35);color:var(--r);}
+.ava-medic{background:rgba(0,217,126,.15);border:1.5px solid rgba(0,217,126,.3);color:var(--g);}
+.uname{font-size:.82rem;font-weight:600;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.logout-btn{
+  background:none;border:1px solid var(--border2);
+  color:var(--muted2);font-size:.72rem;padding:.25rem .6rem;
+  border-radius:6px;cursor:pointer;font-family:var(--font);
+}
+.logout-btn:hover{border-color:var(--r);color:var(--r);}
+
+/* ── VICTIM HOME ── */
+#home-victim .scroll-body{
+  display:flex;flex-direction:column;align-items:center;
+  padding:1.5rem 1.2rem 100px;
+  background:
+    radial-gradient(ellipse at 50% 0%,rgba(230,46,46,.06) 0%,transparent 55%);
+}
+
+/* ── STATUS PILL ── */
+.status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  border-radius:20px;padding:.35rem 1rem;
+  font-size:.75rem;font-weight:700;letter-spacing:.05em;
+  margin-bottom:1.8rem;text-transform:uppercase;
+}
+.sp-safe{background:rgba(0,217,126,.08);border:1px solid rgba(0,217,126,.2);color:var(--g);}
+.sp-alert{background:rgba(230,46,46,.1);border:1px solid rgba(230,46,46,.25);color:var(--r);}
+.sp-dot{width:5px;height:5px;border-radius:50%;animation:blink 1.4s infinite;}
+.sp-safe .sp-dot{background:var(--g);}
+.sp-alert .sp-dot{background:var(--r);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── SOS ── */
+.sos-wrap{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  width:220px;height:220px;margin-bottom:1.5rem;flex-shrink:0;
+}
+.sr{position:absolute;border-radius:50%;animation:sp 3s ease-out infinite;}
+.sr:nth-child(1){width:88px;height:88px;border:1.5px solid rgba(230,46,46,.3);animation-delay:0s;}
+.sr:nth-child(2){width:135px;height:135px;border:1.5px solid rgba(230,46,46,.18);animation-delay:.8s;}
+.sr:nth-child(3){width:185px;height:185px;border:1.5px solid rgba(230,46,46,.1);animation-delay:1.6s;}
+@keyframes sp{0%{opacity:.9;transform:scale(.45)}100%{opacity:0;transform:scale(1)}}
+.sos-btn{
+  width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--r);position:relative;z-index:2;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 0 40px var(--rg),inset 0 2px 0 rgba(255,255,255,.15);
+  transition:all .15s;
+}
+.sos-btn:hover{transform:scale(1.04);}
+.sos-btn:active{transform:scale(.96);}
+.sos-btn.firing{animation:sos-glow 1.5s ease-in-out infinite;}
+@keyframes sos-glow{0%,100%{box-shadow:0 0 30px var(--rg)}50%{box-shadow:0 0 70px rgba(230,46,46,.65),0 0 110px rgba(230,46,46,.2)}}
+.sos-text{font-family:var(--head);font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:2px;}
+.sos-sub{font-size:.58rem;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.08em;margin-top:1px;}
+
+/* ── PHOTO UPLOAD ── */
+.photo-box{
+  width:100%;max-width:380px;
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:14px;padding:1rem;margin-bottom:1rem;
+}
+.pb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.pb-title{font-size:.82rem;font-weight:700;}
+.pb-sub{font-size:.7rem;color:var(--muted2);}
+.pb-drop{
+  border:1.5px dashed var(--border2);border-radius:10px;
+  padding:1.2rem;text-align:center;cursor:pointer;transition:all .2s;
+  position:relative;overflow:hidden;background:var(--bg2);
+}
+.pb-drop:hover{border-color:rgba(230,46,46,.35);background:rgba(230,46,46,.02);}
+.pb-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.pb-preview{width:100%;border-radius:8px;margin-top:.6rem;max-height:150px;object-fit:cover;display:none;}
+.pb-preview.on{display:block;}
+
+/* ── LOCATION ROW ── */
+.loc-row{
+  display:flex;align-items:center;gap:.6rem;
+  width:100%;max-width:380px;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:10px;padding:.7rem .9rem;
+  font-size:.78rem;color:var(--muted2);margin-bottom:1rem;
+}
+.loc-dot{width:7px;height:7px;border-radius:50%;background:var(--g);flex-shrink:0;animation:blink 2s infinite;}
+
+/* ── ACTIVE ALERT CARD ── */
+.active-card{
+  width:100%;max-width:380px;
+  background:rgba(230,46,46,.05);
+  border:1px solid rgba(230,46,46,.18);
+  border-radius:16px;padding:1.2rem;
+}
+.ac-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.ac-title{font-family:var(--head);font-size:1rem;font-weight:800;color:var(--r);letter-spacing:.02em;}
+.cancel-sos{
+  background:rgba(230,46,46,.12);border:1px solid rgba(230,46,46,.25);
+  color:var(--r);font-size:.75rem;font-weight:700;
+  padding:.3rem .75rem;border-radius:6px;cursor:pointer;
+  font-family:var(--font);transition:all .2s;
+}
+.cancel-sos:hover{background:rgba(230,46,46,.2);}
+.ac-stats{display:flex;gap:.5rem;margin-bottom:1rem;}
+.ac-stat{
+  flex:1;background:var(--bg3);border-radius:8px;padding:.6rem;text-align:center;
+}
+.ac-n{font-family:var(--head);font-size:1.2rem;font-weight:800;color:var(--r);}
+.ac-l{font-size:.65rem;color:var(--muted2);margin-top:1px;}
+.resp-wrap{margin-top:.5rem;}
+.resp-row{
+  display:flex;align-items:center;gap:.7rem;
+  padding:.55rem 0;border-bottom:1px solid var(--border);
+}
+.resp-row:last-child{border-bottom:none;}
+.rr-ava{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.rr-info{flex:1;}
+.rr-name{font-size:.82rem;font-weight:700;}
+.rr-role{font-size:.68rem;color:var(--muted2);}
+.rr-status{font-size:.7rem;font-weight:700;}
+.rrs-enroute{color:var(--b);}
+.rrs-onway{color:var(--g);}
+.track-btn-wrap{margin-top:.8rem;}
+
+/* ── SITUATION UPDATE ── */
+.situation-box{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:12px;
+  padding:.8rem;margin-top:.9rem;
+}
+.sit-title{font-size:.72rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
+.situation-box textarea{font-size:.85rem;min-height:52px;}
+
+/* ── MEDIC HOME ── */
+.medic-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1.2rem;padding-bottom:90px;}
+.medic-scroll::-webkit-scrollbar{width:0;}
+.mhdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.2rem;}
+.mhdr-title{font-family:var(--head);font-size:1.6rem;font-weight:800;line-height:1.1;}
+.online-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;}
+.olabel{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+.olabel.on{color:var(--g);}
+.olabel.off{color:var(--muted);}
+.toggle-sw{
+  width:44px;height:24px;border-radius:12px;background:var(--bg4);
+  border:1px solid var(--border2);cursor:pointer;position:relative;transition:background .3s;
+}
+.toggle-sw.on{background:var(--g);}
+.toggle-sw::after{
+  content:'';position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  transition:transform .3s;
+}
+.toggle-sw.on::after{transform:translateX(20px);}
+
+.range-row{margin-bottom:1.2rem;}
+.row-lbl{font-size:.7rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;}
+.range-btns{display:flex;gap:.4rem;}
+.rbtn{
+  flex:1;padding:.45rem 0;border-radius:8px;
+  border:1px solid var(--border2);background:var(--bg3);
+  font-size:.8rem;font-weight:700;cursor:pointer;
+  font-family:var(--font);color:var(--muted2);transition:all .2s;text-align:center;
+}
+.rbtn.on{background:rgba(230,46,46,.12);border-color:var(--r);color:var(--r);}
+
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem;}
+.sec-title{font-family:var(--head);font-size:1rem;font-weight:800;letter-spacing:.02em;}
+.badge{
+  background:var(--r);color:#fff;border-radius:20px;
+  padding:.1rem .5rem;font-size:.68rem;font-weight:800;
+}
+
+/* ── ALERT CARD (MEDIC VIEW) ── */
+.m-alert-card{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:14px;padding:1rem;margin-bottom:.8rem;
+  transition:all .2s;animation:fadeUp .3s ease;
+}
+.m-alert-card.new{border-color:rgba(230,46,46,.3);}
+.m-alert-card:hover{transform:translateY(-1px);}
+.mac-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.5rem;}
+.mac-name{font-size:.9rem;font-weight:700;}
+.mac-time{font-size:.68rem;color:var(--muted2);}
+.mac-dist{
+  background:rgba(230,46,46,.1);border:1px solid rgba(230,46,46,.2);
+  color:var(--r);border-radius:5px;padding:.2rem .55rem;
+  font-size:.72rem;font-weight:800;white-space:nowrap;
+}
+.mac-photo{width:100%;border-radius:8px;max-height:120px;object-fit:cover;margin-bottom:.6rem;display:none;}
+.mac-photo.on{display:block;}
+.mac-loc{display:flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--muted2);margin-bottom:.7rem;}
+.mac-actions{display:flex;gap:.5rem;}
+
+/* ── MAP SCREEN ── */
+#map-screen .scroll-body{padding:0;padding-bottom:0;}
+#leaflet-map{width:100%;height:45vh;min-height:240px;z-index:1;}
+.map-overlay-card{
+  flex:1;overflow-y:auto;padding:1rem;
+  background:var(--bg);
+}
+.track-card{
+  background:var(--bg3);border:1px solid rgba(59,130,246,.2);
+  border-radius:14px;padding:1rem;margin-bottom:.8rem;
+}
+.tc-head{display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem;}
+.tc-ava{width:40px;height:40px;border-radius:50%;background:rgba(59,130,246,.12);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.tc-info .tc-name{font-size:.9rem;font-weight:700;}
+.tc-info .tc-role{font-size:.72rem;color:var(--muted2);}
+.tc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;}
+.tcs{background:var(--bg2);border-radius:8px;padding:.6rem;text-align:center;}
+.tcs-n{font-family:var(--head);font-size:1rem;font-weight:800;color:var(--b);}
+.tcs-l{font-size:.65rem;color:var(--muted2);margin-top:1px;}
+.multi-alert-list{margin-top:.5rem;}
+.ma-row{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.5rem 0;border-bottom:1px solid var(--border);
+  font-size:.78rem;
+}
+.ma-row:last-child{border-bottom:none;}
+.ma-badge{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted);}
+.empty-icon{font-size:2rem;margin-bottom:.5rem;opacity:.4;}
+.empty-text{font-size:.82rem;}
+
+/* ── ADMIN ── */
+.admin-scroll{flex:1;overflow-y:auto;padding:1.2rem;padding-bottom:80px;}
+.admin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1.2rem;}
+.as{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:12px;padding:.9rem;
+}
+.as-n{font-family:var(--head);font-size:1.5rem;font-weight:800;margin-bottom:.1rem;}
+.as-l{font-size:.7rem;color:var(--muted2);}
+.as-n.r{color:var(--r);} .as-n.g{color:var(--g);} .as-n.b{color:var(--b);} .as-n.y{color:var(--y);}
+.users-tbl{background:var(--bg3);border-radius:12px;overflow:hidden;border:1px solid var(--border2);}
+.tbl-hdr{
+  display:grid;grid-template-columns:1.2fr 1fr .8fr 1fr;
+  padding:.5rem .8rem;background:var(--bg2);border-bottom:1px solid var(--border2);
+}
+.th{font-size:.65rem;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;}
+.tbl-row{
+  display:grid;grid-template-columns:1.2fr 1fr .8fr 1fr;
+  padding:.6rem .8rem;border-bottom:1px solid var(--border);align-items:center;
+}
+.tbl-row:last-child{border-bottom:none;}
+.tc{font-size:.78rem;}
+.rpill{display:inline-block;border-radius:4px;padding:.1rem .45rem;font-size:.65rem;font-weight:800;}
+.rpill-user{background:rgba(59,130,246,.12);color:var(--b);}
+.rpill-medic{background:rgba(0,217,126,.1);color:var(--g);}
+
+/* ── BOTTOM NAV ── */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  display:flex;background:rgba(8,8,8,.97);
+  border-top:1px solid var(--border2);padding:.5rem 0 .6rem;
+  backdrop-filter:blur(12px);z-index:200;
+}
+.bnav-i{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;cursor:pointer;padding:.25rem 0;transition:color .2s;color:var(--muted);
+}
+.bnav-i.on{color:var(--r);}
+.bnav-icon{font-size:1.15rem;}
+.bnav-lbl{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
+.bnav-badge{
+  position:absolute;top:-2px;right:-4px;
+  background:var(--r);color:#fff;border-radius:10px;
+  padding:0 4px;font-size:.55rem;font-weight:800;
+}
+
+/* ── MODAL ── */
+.modal-wrap{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  backdrop-filter:blur(5px);z-index:500;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-wrap.open{display:flex;}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:20px 20px 0 0;padding:1.5rem;
+  width:100%;max-width:500px;max-height:85vh;overflow-y:auto;
+  animation:mu .3s ease;
+}
+@keyframes mu{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:36px;height:3px;background:var(--bg4);border-radius:2px;margin:0 auto 1.2rem;}
+.modal-title{font-family:var(--head);font-size:1.3rem;font-weight:800;margin-bottom:.2rem;}
+.modal-sub{font-size:.8rem;color:var(--muted2);margin-bottom:1.2rem;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:.4rem;align-items:center;pointer-events:none;}
+.toast{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-radius:10px;padding:.6rem 1.1rem;
+  font-size:.8rem;font-weight:600;white-space:nowrap;
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
+  animation:ti .3s ease,to .3s ease 2.7s forwards;
+}
+.toast.s{border-color:rgba(0,217,126,.3);background:rgba(0,217,126,.08);color:var(--g);}
+.toast.e{border-color:rgba(230,46,46,.3);background:rgba(230,46,46,.08);color:#ff8080;}
+.toast.i{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.08);color:var(--b);}
+@keyframes ti{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes to{to{opacity:0;transform:translateY(-8px)}}
+
+/* ── SETUP GUIDE ── */
+.setup-guide{
+  background:var(--bg2);border:1px solid rgba(245,158,11,.2);
+  border-radius:14px;padding:1.2rem;margin-bottom:1rem;
+}
+.sg-title{font-family:var(--head);font-size:1rem;font-weight:800;color:var(--y);margin-bottom:.7rem;}
+.sg-step{
+  display:flex;gap:.7rem;padding:.4rem 0;
+  border-bottom:1px solid var(--border);font-size:.78rem;line-height:1.5;
+}
+.sg-step:last-child{border-bottom:none;}
+.sg-num{
+  width:20px;height:20px;border-radius:50%;background:rgba(245,158,11,.15);
+  border:1px solid rgba(245,158,11,.3);color:var(--y);
+  font-size:.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sg-text{color:var(--muted2);}
+.sg-text code{color:var(--y);background:rgba(245,158,11,.08);padding:.1rem .3rem;border-radius:3px;font-size:.72rem;}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:.9rem 0;}
+.link-text{color:var(--r);cursor:pointer;font-size:.82rem;}
+.hidden{display:none!important;}
+.mt{margin-top:.5rem;}
+.mt2{margin-top:1rem;}
+
+/* Pulse live indicator */
+.live-dot{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:.7rem;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.05em;
+}
+.live-dot::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--r);animation:blink 1s infinite;flex-shrink:0;}
+/* ── MEDIC TRACKER ── */
+.tracker-map-wrap{width:100%;height:32vh;min-height:190px;border-radius:14px;overflow:hidden;border:1px solid var(--border2);margin-bottom:1rem;}
+#tracker-map{width:100%;height:100%;z-index:1;}
+.medic-cards-list{display:flex;flex-direction:column;gap:.7rem;}
+.medic-card{background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:.9rem;display:flex;align-items:center;gap:.8rem;transition:all .2s;animation:fadeUp .3s ease;}
+.medic-card.active-resp{border-color:rgba(0,217,126,.35);background:rgba(0,217,126,.04);}
+.medic-card.en-route{border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.04);}
+.mc-ava{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.mc-ava-medic{background:rgba(0,217,126,.12);border:1.5px solid rgba(0,217,126,.3);}
+.mc-ava-amb{background:rgba(59,130,246,.12);border:1.5px solid rgba(59,130,246,.3);}
+.mc-info{flex:1;min-width:0;}
+.mc-name{font-size:.88rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mc-type{font-size:.7rem;color:var(--muted2);margin-top:1px;}
+.mc-right{text-align:right;flex-shrink:0;}
+.mc-eta{font-family:var(--head);font-size:1rem;font-weight:800;color:var(--b);}
+.mc-dist{font-size:.68rem;color:var(--muted2);margin-top:1px;}
+.mc-status{font-size:.7rem;font-weight:700;margin-top:2px;}
+.mcs-online{color:var(--g);}
+.mcs-enroute{color:var(--b);}
+.tracker-stats{display:flex;gap:.5rem;margin-bottom:1rem;}
+.ts-card{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:.65rem;text-align:center;}
+.ts-n{font-family:var(--head);font-size:1.3rem;font-weight:800;}
+.ts-l{font-size:.62rem;color:var(--muted2);margin-top:1px;}
+
+/* ── ALERT NOTIFICATION BANNER (medic) ── */
+.alert-notif{position:fixed;top:0;left:0;right:0;z-index:9990;background:var(--r);max-height:0;overflow:hidden;transition:max-height .45s ease;}
+.alert-notif.show{max-height:220px;padding:1rem 1.2rem;}
+.an-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;}
+.an-title{font-family:var(--head);font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:.03em;}
+.an-dismiss{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:.75rem;font-weight:700;padding:.25rem .6rem;border-radius:6px;cursor:pointer;font-family:var(--font);}
+.an-body{font-size:.82rem;color:rgba(255,255,255,.9);margin-bottom:.7rem;line-height:1.5;}
+.an-actions{display:flex;gap:.5rem;}
+.an-btn-accept{flex:2;padding:.55rem;background:#fff;color:var(--r);border:none;border-radius:8px;font-weight:800;font-family:var(--head);font-size:.9rem;cursor:pointer;}
+.an-btn-decline{flex:1;padding:.55rem;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;font-weight:700;font-family:var(--font);font-size:.8rem;cursor:pointer;}
+
+/* ── PARENT ALERT PANEL ── */
+.parent-section{width:100%;max-width:380px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:1rem;margin-top:.5rem;}
+.ps-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.ps-title{font-size:.85rem;font-weight:700;color:var(--y);}
+.ps-badge{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:var(--y);border-radius:20px;padding:.15rem .5rem;font-size:.68rem;font-weight:800;}
+.parent-info-row{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--border);}
+.pi-icon{font-size:1.1rem;flex-shrink:0;}
+.pi-name{font-size:.82rem;font-weight:700;}
+.pi-phone{font-size:.72rem;color:var(--muted2);}
+.pal-item{display:flex;align-items:flex-start;gap:.5rem;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.74rem;}
+.pal-item:last-child{border-bottom:none;}
+.pal-msg{flex:1;color:var(--muted2);line-height:1.4;}
+.pal-time{color:var(--muted);font-size:.67rem;flex-shrink:0;white-space:nowrap;}
+.send-parent-btn{width:100%;padding:.6rem;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);color:var(--y);border-radius:8px;font-weight:700;font-family:var(--font);font-size:.8rem;cursor:pointer;margin-top:.7rem;transition:all .2s;}
+.send-parent-btn:hover{background:rgba(245,158,11,.2);}
+
+/* ── REGISTRATION IMPROVEMENTS ── */
+.reg-progress{display:flex;gap:.3rem;margin-bottom:1.5rem;}
+.rp-step{flex:1;height:3px;border-radius:2px;background:var(--bg4);transition:background .35s;}
+.rp-step.done{background:var(--r);}
+.reg-section-title{font-size:.68rem;font-weight:800;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:.9rem 0 .6rem;padding-bottom:.4rem;border-bottom:1px solid var(--border);}
+.parent-field-wrap{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.15);border-radius:10px;padding:.8rem;margin-bottom:.9rem;}
+.parent-field-wrap label{color:var(--y)!important;}
+.parent-field-hint{font-size:.7rem;color:var(--muted2);margin-top:.4rem;line-height:1.5;}
+
+/* ── NAV NOTIFICATION DOT ── */
+.bnav-i{position:relative;}
+.nav-notif-dot{position:absolute;top:2px;right:calc(50% - 16px);width:8px;height:8px;background:var(--r);border-radius:50%;display:none;border:1.5px solid var(--bg);}
+.nav-notif-dot.show{display:block;animation:blink 1.2s infinite;}
+</style>
+</head>
+<body>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Alert Notification Banner (medic incoming SOS) -->
+<div class="alert-notif" id="alertNotifBanner">
+  <div class="an-top">
+    <div class="an-title">🚨 NEW SOS ALERT</div>
+    <button class="an-dismiss" onclick="dismissNotifBanner()">✕ Dismiss</button>
+  </div>
+  <div class="an-body" id="anBodyText">Someone nearby needs help!</div>
+  <div class="an-actions">
+    <button class="an-btn-decline" onclick="declineFromBanner()">Decline</button>
+    <button class="an-btn-accept" onclick="acceptFromBanner()">Accept & Respond →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SPLASH
+══════════════════════════════════════════ -->
+<section class="screen active" id="splash">
+  <div class="splash-glow"></div>
+  <div class="splash-logo">RAPID<em>AID</em></div>
+  <div class="splash-tagline">Live Emergency Network · Hyderabad</div>
+  <div class="splash-btns">
+    <button class="btn btn-red" onclick="show('register')">Create Account</button>
+    <button class="btn btn-outline" onclick="show('login')">Sign In</button>
+    <div style="text-align:center;margin-top:.3rem;">
+      <span class="link-text" style="font-size:.75rem;" onclick="openAdminModal()">🔐 Admin Panel</span>
+    </div>
+  </div>
+  <div class="splash-note">
+    ⚡ Real-time alerts · SMS to parents · Live ambulance tracking
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     REGISTER
+══════════════════════════════════════════ -->
+<section class="screen" id="register" style="overflow-y:auto;">
+  <div class="auth-page">
+    <div class="auth-back" onclick="show('splash')">← Back</div>
+    <div class="page-title">JOIN<br><em>RAPIDAID</em></div>
+    <div class="page-sub">Register once. Respond everywhere.</div>
+
+    <div class="reg-progress">
+      <div class="rp-step done" id="rp1"></div>
+      <div class="rp-step" id="rp2"></div>
+      <div class="rp-step" id="rp3"></div>
+    </div>
+
+    <div class="err" id="regErr">Please complete all fields.</div>
+
+    <div class="reg-section-title">Personal Details</div>
+    <div class="fgrp">
+      <label>Full Name</label>
+      <input type="text" id="rName" placeholder="Arjun Sharma" oninput="updateRegProgress()">
+    </div>
+    <div class="fgrp">
+      <label>Phone Number</label>
+      <input type="tel" id="rPhone" placeholder="+91 98765 43210" oninput="updateRegProgress()">
+    </div>
+
+    <div class="reg-section-title">Emergency Contact</div>
+    <div class="parent-field-wrap">
+      <label>👨‍👩‍👧 Parent / Guardian Name</label>
+      <input type="text" id="rParentName" placeholder="e.g. Suresh Sharma" style="margin-top:.4rem;" oninput="updateRegProgress()">
+    </div>
+    <div class="parent-field-wrap" style="margin-top:-.3rem;">
+      <label>📱 Parent / Guardian Phone</label>
+      <input type="tel" id="rParent" placeholder="+91 98765 43210" style="margin-top:.4rem;" oninput="updateRegProgress()">
+      <div class="parent-field-hint">⚡ Instant SMS alert sent to this number when you trigger SOS</div>
+    </div>
+
+    <div class="reg-section-title">Your Role</div>
+    <div class="fgrp">
+      <div class="role-grid">
+        <div class="role-card" id="rc-user" onclick="pickRole('user')">
+          <div class="rc-icon">👤</div>
+          <div class="rc-name">User</div>
+          <div class="rc-desc">Send SOS alerts</div>
+        </div>
+        <div class="role-card" id="rc-medic" onclick="pickRole('medic')">
+          <div class="rc-icon">🧑‍⚕️</div>
+          <div class="rc-name">Medic Responder</div>
+          <div class="rc-desc">Receive &amp; respond</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fgrp hidden" id="medicTypeRow">
+      <label>Medic Type (select all that apply)</label>
+      <div class="type-chips">
+        <div class="tchip" data-t="doctor" onclick="toggleType(this)">🩺 Doctor</div>
+        <div class="tchip" data-t="nurse" onclick="toggleType(this)">💉 Nurse</div>
+        <div class="tchip" data-t="paramedic" onclick="toggleType(this)">🚑 Paramedic</div>
+        <div class="tchip" data-t="medical-student" onclick="toggleType(this)">🎓 Medical Student</div>
+        <div class="tchip" data-t="first-aid" onclick="toggleType(this)">🩹 First Aid Known</div>
+      </div>
+    </div>
+
+    <button class="btn btn-red" onclick="doRegister()">Create Account →</button>
+    <div style="text-align:center;margin-top:.8rem;" class="link-text" onclick="show('login')">Already registered? Sign In</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     LOGIN
+══════════════════════════════════════════ -->
+<section class="screen" id="login" style="overflow-y:auto;">
+  <div class="auth-page">
+    <div class="auth-back" onclick="show('splash')">← Back</div>
+    <div class="page-title">SIGN<br><em>IN</em></div>
+    <div class="page-sub">Back on duty. People need you.</div>
+
+    <div class="err" id="loginErr">Wrong phone or password.</div>
+
+    <div class="fgrp">
+      <label>Phone Number</label>
+      <input type="tel" id="lPhone" placeholder="+91 98765 43210">
+    </div>
+
+    <button class="btn btn-red" onclick="doLogin()">Sign In →</button>
+    <div style="text-align:center;margin-top:.8rem;" class="link-text" onclick="show('register')">New here? Register</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     HOME — VICTIM/USER
+══════════════════════════════════════════ -->
+<section class="screen" id="home-victim">
+  <div class="topnav">
+    <div class="topnav-logo">RAPID<em>AID</em></div>
+    <div class="topnav-right">
+      <div class="ava ava-user" id="vuAva">U</div>
+      <div class="uname" id="vuName">User</div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="scroll-body" style="display:flex;flex-direction:column;align-items:center;padding:1.2rem 1.2rem 100px;background:radial-gradient(ellipse at 50% -5%,rgba(230,46,46,.05) 0%,transparent 50%);">
+
+    <div class="back-to-volunteer hidden" id="backToVolunteer" onclick="show('home-medic')">
+      ← Back to Volunteer Mode
+    </div>
+
+    <div class="status-pill sp-safe" id="vu-status-pill">
+      <span class="sp-dot"></span>
+      <span id="vu-status-txt">Safe · No Active Alert</span>
+    </div>
+
+    <!-- Multi-user alert notice -->
+    <div id="nearby-alerts-notice" class="hidden" style="width:100%;max-width:380px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.78rem;color:var(--y);">
+      ⚠️ <strong id="nearby-count">0</strong> active alerts near you
+    </div>
+
+    <!-- SOS BUTTON -->
+    <div class="sos-wrap">
+      <div class="sr"></div><div class="sr"></div><div class="sr"></div>
+      <button class="sos-btn" id="sosBtn" onclick="triggerSOS()">
+        <div class="sos-text" id="sos-text">SOS</div>
+        <div class="sos-sub" id="sos-sub">PRESS</div>
+      </button>
+    </div>
+
+    <p style="font-size:.8rem;color:var(--muted2);margin-bottom:1.2rem;text-align:center;" id="sos-hint">
+      Press SOS to alert nearby medics &amp; ambulances
+    </p>
+
+    <!-- Photo -->
+    <div class="photo-box" id="photo-box">
+      <div class="pb-head">
+        <div>
+          <div class="pb-title">📷 Scene Photo</div>
+          <div class="pb-sub">Attach before or after SOS</div>
+        </div>
+      </div>
+      <div class="pb-drop">
+        <input type="file" id="photoInput" accept="image/*" capture="environment" onchange="handlePhoto(event)">
+        <div style="font-size:1.3rem;margin-bottom:.3rem;">📸</div>
+        <div style="font-size:.75rem;color:var(--muted);">Tap to capture / upload</div>
+      </div>
+      <img class="pb-preview" id="photoPreview" src="" alt="">
+    </div>
+
+    <!-- Location -->
+    <div class="loc-row" id="locRow">
+      <div class="loc-dot"></div>
+      <span id="locText">Detecting location…</span>
+    </div>
+
+    <!-- Active Alert Card -->
+    <div class="active-card hidden" id="activeCard">
+      <div class="ac-head">
+        <div class="ac-title">🔴 SOS ACTIVE</div>
+        <button class="cancel-sos" onclick="cancelSOS()">Cancel SOS</button>
+      </div>
+      <div class="ac-stats">
+        <div class="ac-stat"><div class="ac-n" id="ac-notified">0</div><div class="ac-l">Notified</div></div>
+        <div class="ac-stat"><div class="ac-n" id="ac-accepted">0</div><div class="ac-l">Responding</div></div>
+        <div class="ac-stat"><div class="ac-n" id="ac-time">0s</div><div class="ac-l">Elapsed</div></div>
+      </div>
+      <div style="font-size:.7rem;color:var(--muted2);margin-bottom:.4rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Responders</div>
+      <div class="resp-wrap" id="respWrap"></div>
+
+      <div class="situation-box">
+        <div class="sit-title">📝 Send Situation Update</div>
+        <textarea id="ac-description" placeholder="Describe what happened — injuries, hazards, anything responders should know…" rows="2"></textarea>
+        <div id="ac-photo-preview" class="hidden" style="margin:.5rem 0;">
+          <img id="ac-photo-preview-img" style="width:100%;border-radius:8px;max-height:140px;object-fit:cover;">
+        </div>
+        <div style="display:flex;gap:.5rem;margin-top:.5rem;">
+          <input type="file" accept="image/*" capture="environment" id="ac-photo-input" style="display:none" onchange="handleActiveCardPhoto(event)">
+          <button class="btn btn-outline" style="flex:1;font-size:.8rem;padding:.6rem;" onclick="document.getElementById('ac-photo-input').click()">📷 Add Photo</button>
+          <button class="btn btn-red" style="flex:1;font-size:.8rem;padding:.6rem;" onclick="sendSituationUpdate()">📤 Send Update</button>
+        </div>
+      </div>
+
+      <div class="track-btn-wrap">
+        <button class="btn btn-red" style="font-size:.88rem;padding:.65rem;" onclick="show('map-screen');initMap();">🗺 Track Ambulance Live</button>
+      </div>
+    </div>
+
+    <!-- Parent Alert Panel -->
+    <div class="parent-section" id="parentSection">
+      <div class="ps-head">
+        <div class="ps-title">👨‍👩‍👧 Parent Alert</div>
+        <div class="ps-badge" id="psBadge">Ready</div>
+      </div>
+      <div class="parent-info-row">
+        <div class="pi-icon">📱</div>
+        <div style="flex:1;">
+          <div class="pi-name" id="piName">Guardian</div>
+          <div class="pi-phone" id="piPhone">Not configured</div>
+        </div>
+      </div>
+      <div id="parentAlertsLog" style="max-height:100px;overflow-y:auto;margin-top:.3rem;"></div>
+      <button class="send-parent-btn" onclick="sendManualParentAlert()">📩 Send Update to Parent</button>
+    </div>
+
+  </div><!-- end scroll-body -->
+
+  <nav class="bnav">
+    <div class="bnav-i on" id="vnHome" onclick="goHome()"><div class="bnav-icon">🏠</div><div class="bnav-lbl">Home</div></div>
+    <div class="bnav-i" onclick="show('map-screen');initMap();"><div class="bnav-icon">🗺</div><div class="bnav-lbl">Track</div></div>
+    <div class="bnav-i" onclick="showUserProfile()"><div class="bnav-icon">👤</div><div class="bnav-lbl">Profile</div></div>
+  </nav>
+</section>
+
+<!-- ══════════════════════════════════════════
+     HOME — MEDIC
+══════════════════════════════════════════ -->
+<section class="screen" id="home-medic">
+  <div class="topnav">
+    <div class="topnav-logo">RAPID<em>AID</em></div>
+    <div class="topnav-right">
+      <div class="ava ava-medic" id="mmAva">M</div>
+      <div class="uname" id="mmName">Medic</div>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="medic-scroll">
+    <div class="mhdr">
+      <div class="mhdr-title">NEARBY<br>ALERTS</div>
+      <div class="online-wrap">
+        <div class="olabel off" id="ol-lbl">OFFLINE</div>
+        <div class="toggle-sw" id="onlineSw" onclick="toggleOnline()"></div>
+      </div>
+    </div>
+
+    <div class="med-self-sos" onclick="medicNeedsHelp()">
+      🆘 <span>In trouble yourself? Tap here to send your own SOS</span>
+    </div>
+
+    <div class="range-row">
+      <div class="row-lbl">Alert Range</div>
+      <div class="range-btns">
+        <div class="rbtn on" onclick="setRange(1,this)">1 km</div>
+        <div class="rbtn" onclick="setRange(2,this)">2 km</div>
+        <div class="rbtn" onclick="setRange(3,this)">3 km</div>
+        <div class="rbtn" onclick="setRange(5,this)">5 km</div>
+      </div>
+    </div>
+
+    <div class="sec-hdr">
+      <div class="sec-title">ACTIVE ALERTS</div>
+      <div class="badge" id="m-badge">0</div>
+    </div>
+    <div id="m-alert-list">
+      <div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Go online to receive alerts from your area.</div></div>
+    </div>
+  </div>
+
+  <nav class="bnav">
+    <div class="bnav-i on" id="medicNavAlerts" onclick="show('home-medic')">
+      <div class="bnav-icon">🚨</div>
+      <div class="nav-notif-dot" id="medicNotifDot"></div>
+      <div class="bnav-lbl">Alerts</div>
+    </div>
+    <div class="bnav-i" onclick="showMedicTracker()"><div class="bnav-icon">📡</div><div class="bnav-lbl">Tracker</div></div>
+    <div class="bnav-i" onclick="show('map-screen');initMap();"><div class="bnav-icon">🗺</div><div class="bnav-lbl">Map</div></div>
+    <div class="bnav-i" onclick="showUserProfile()"><div class="bnav-icon">👤</div><div class="bnav-lbl">Profile</div></div>
+  </nav>
+</section>
+
+<!-- ══════════════════════════════════════════
+     MEDIC TRACKER SCREEN
+══════════════════════════════════════════ -->
+<section class="screen" id="tracker-screen">
+  <div class="topnav">
+    <div class="topnav-logo">RAPID<em>AID</em> TRACKER</div>
+    <div class="topnav-right">
+      <div class="ava ava-medic" id="trAva">M</div>
+      <div class="uname" id="trName">Medic</div>
+    </div>
+  </div>
+  <div class="medic-scroll" style="padding:1.2rem;padding-bottom:90px;">
+    <div style="font-family:var(--head);font-size:1.55rem;font-weight:800;line-height:1.1;margin-bottom:1rem;">LIVE<br>RESPONDER MAP</div>
+
+    <div class="tracker-stats">
+      <div class="ts-card"><div class="ts-n g" id="trOnline">0</div><div class="ts-l">Online Medics</div></div>
+      <div class="ts-card"><div class="ts-n r" id="trAlerts">0</div><div class="ts-l">Active Alerts</div></div>
+      <div class="ts-card"><div class="ts-n b" id="trResponding">0</div><div class="ts-l">Responding</div></div>
+    </div>
+
+    <div class="tracker-map-wrap">
+      <div id="tracker-map"></div>
+    </div>
+
+    <div style="font-family:var(--head);font-size:.9rem;font-weight:800;letter-spacing:.05em;margin-bottom:.7rem;color:var(--g);">● ACTIVE RESPONDERS</div>
+    <div id="medicTrackerList" class="medic-cards-list">
+      <div class="empty"><div class="empty-icon">📡</div><div class="empty-text">No active responders right now.</div></div>
+    </div>
+
+    <div style="font-family:var(--head);font-size:.9rem;font-weight:800;letter-spacing:.05em;margin:1rem 0 .7rem;color:var(--r);">🆘 NEARBY VICTIMS</div>
+    <div id="trackerVictimsList" class="medic-cards-list">
+      <div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No active SOS alerts nearby.</div></div>
+    </div>
+  </div>
+  <nav class="bnav">
+    <div class="bnav-i" onclick="show('home-medic')"><div class="bnav-icon">🚨</div><div class="bnav-lbl">Alerts</div></div>
+    <div class="bnav-i on"><div class="bnav-icon">📡</div><div class="bnav-lbl">Tracker</div></div>
+    <div class="bnav-i" onclick="show('map-screen');initMap();"><div class="bnav-icon">🗺</div><div class="bnav-lbl">Map</div></div>
+    <div class="bnav-i" onclick="showUserProfile()"><div class="bnav-icon">👤</div><div class="bnav-lbl">Profile</div></div>
+  </nav>
+</section>
+
+<!-- ══════════════════════════════════════════
+     MAP / TRACKING SCREEN
+══════════════════════════════════════════ -->
+<section class="screen" id="map-screen" style="overflow:hidden;">
+  <div class="topnav">
+    <div class="topnav-logo">LIVE <em>MAP</em></div>
+    <button class="logout-btn" id="mapBackBtn" onclick="goHomeFromMap()">← Back</button>
+  </div>
+  <div id="leaflet-map"></div>
+  <div class="map-overlay-card">
+    <div id="track-card-wrap">
+      <div class="track-card">
+        <div class="tc-head">
+          <div class="tc-ava">🚑</div>
+          <div class="tc-info">
+            <div class="tc-name" id="tc-name">Ambulance En Route</div>
+            <div class="tc-role"><span class="live-dot"></span> Live tracking active</div>
+          </div>
+        </div>
+        <div class="tc-stats">
+          <div class="tcs"><div class="tcs-n" id="tc-eta">~4 min</div><div class="tcs-l">ETA</div></div>
+          <div class="tcs"><div class="tcs-n" id="tc-dist">1.2 km</div><div class="tcs-l">Distance</div></div>
+          <div class="tcs"><div class="tcs-n" id="tc-speed">40 km/h</div><div class="tcs-l">Speed</div></div>
+        </div>
+      </div>
+      <div style="font-family:var(--head);font-size:.85rem;font-weight:800;margin:.8rem 0 .4rem;letter-spacing:.05em;">ALL ACTIVE ALERTS IN AREA</div>
+      <div id="map-alerts-list" class="multi-alert-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     ADMIN SCREEN
+══════════════════════════════════════════ -->
+<section class="screen" id="admin-screen">
+  <div class="topnav">
+    <div class="topnav-logo">ADMIN <em>PANEL</em></div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+  <div class="admin-scroll">
+    <div class="admin-grid" id="admin-stats">
+      <div class="as"><div class="as-n b" id="a-users">0</div><div class="as-l">Users</div></div>
+      <div class="as"><div class="as-n g" id="a-medics">0</div><div class="as-l">Medics</div></div>
+      <div class="as"><div class="as-n r" id="a-alerts">0</div><div class="as-l">Total Alerts</div></div>
+      <div class="as"><div class="as-n y" id="a-active">0</div><div class="as-l">Active Now</div></div>
+    </div>
+    <div style="font-family:var(--head);font-size:.95rem;font-weight:800;margin-bottom:.6rem;letter-spacing:.05em;">REGISTERED USERS</div>
+    <div class="users-tbl">
+      <div class="tbl-hdr">
+        <div class="th">Name</div><div class="th">Phone</div>
+        <div class="th">Role</div><div class="th">Type</div>
+      </div>
+      <div id="admin-user-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+<!-- Admin Login -->
+<div class="modal-wrap" id="adminModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Admin Access</div>
+    <div class="modal-sub">Default password: <strong>admin123</strong></div>
+    <div class="fgrp"><label>Password</label><input type="password" id="adminPw" placeholder="Enter admin password"></div>
+    <div class="err" id="adminErr">Incorrect password.</div>
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn btn-outline" style="flex:1;font-size:.9rem;padding:.7rem;" onclick="closeModal('adminModal')">Cancel</button>
+      <button class="btn btn-red" style="flex:2;font-size:.9rem;padding:.7rem;" onclick="doAdminLogin()">Enter →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Detail (medic) -->
+<div class="modal-wrap" id="alertModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🚨 Emergency Alert</div>
+    <div class="modal-sub" id="am-sub">Victim needs assistance</div>
+    <img id="am-photo" src="" style="width:100%;border-radius:10px;margin-bottom:.9rem;display:none;max-height:180px;object-fit:cover;">
+    <div style="background:var(--bg3);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="font-size:.68rem;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;">Victim Info</div>
+      <div id="am-victim" style="font-size:.9rem;font-weight:700;"></div>
+      <div id="am-phone" style="font-size:.78rem;color:var(--muted2);margin-top:.2rem;"></div>
+      <div id="am-loc" style="font-size:.75rem;color:var(--muted2);margin-top:.2rem;"></div>
+      <div id="am-dist" style="font-size:.8rem;color:var(--r);margin-top:.3rem;font-weight:700;"></div>
+    </div>
+    <div class="med-info-box hidden" id="am-med-box">
+      <div class="med-info-title">⚕️ Medical Info</div>
+      <div id="am-med-content"></div>
+    </div>
+    <div class="med-info-box hidden" id="am-situation-box" style="background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2);">
+      <div class="med-info-title" style="color:var(--b);">📝 Situation Update</div>
+      <div id="am-situation-content" style="font-size:.82rem;color:var(--text);"></div>
+    </div>
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn btn-outline" style="flex:1;font-size:.9rem;padding:.7rem;" onclick="declineAlert()">Decline</button>
+      <button class="btn btn-red" style="flex:2;font-size:.9rem;padding:.7rem;" onclick="acceptAlert()">Accept & Respond →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-wrap" id="profileModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Your Profile</div>
+    <div id="profile-content" style="font-size:.85rem;line-height:2;color:var(--muted2);"></div>
+    <span class="med-edit-link" onclick="openMedicalIdModal()">⚕️ Edit Medical ID</span>
+
+    <div class="reg-section-title" style="margin-top:1rem;">📡 IoT Device</div>
+    <p style="font-size:.75rem;color:var(--muted2);line-height:1.5;margin-bottom:.6rem;">
+      Wire a crash sensor or panic button to open your device link below — it will fire your SOS automatically, without needing to tap anything.
+    </p>
+    <div style="display:flex;gap:.5rem;">
+      <button class="btn btn-outline" style="flex:1;font-size:.82rem;padding:.6rem;" onclick="copyDeviceLink()">📋 Copy Device Link</button>
+      <button class="btn btn-outline" style="flex:1;font-size:.82rem;padding:.6rem;" onclick="testIoTTrigger()">🧪 Test Trigger</button>
+    </div>
+
+    <button class="btn btn-outline mt2" onclick="closeModal('profileModal')">Close</button>
+  </div>
+</div>
+
+<!-- Medical ID Edit Modal -->
+<div class="modal-wrap" id="medicalIdModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚕️ Medical ID</div>
+    <div class="modal-sub">Shown to responders during an SOS.</div>
+    <div class="fgrp">
+      <label>Blood Group</label>
+      <select id="mBlood">
+        <option value="">Unknown</option>
+        <option>A+</option><option>A-</option>
+        <option>B+</option><option>B-</option>
+        <option>O+</option><option>O-</option>
+        <option>AB+</option><option>AB-</option>
+      </select>
+    </div>
+    <div class="fgrp">
+      <label>Allergies</label>
+      <input type="text" id="mAllergies" placeholder="e.g. Penicillin, Peanuts">
+    </div>
+    <div class="fgrp">
+      <label>Medical Conditions</label>
+      <input type="text" id="mConditions" placeholder="e.g. Asthma, Diabetes, Epilepsy">
+    </div>
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn btn-outline" style="flex:1;font-size:.9rem;padding:.7rem;" onclick="closeModal('medicalIdModal')">Cancel</button>
+      <button class="btn btn-red" style="flex:2;font-size:.9rem;padding:.7rem;" onclick="saveMedicalId()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  TWILIO CONFIG — for real SMS
+//  Calls your backend endpoint that sends SMS via Twilio
+// ═══════════════════════════════════════════════════════════
+const TWILIO_ENDPOINT = "https://your-backend.com/send-sms"; // Replace with your endpoint
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let currentUser = null;
+let selectedRole = null;
+let selectedMedicTypes = [];
+let isOnline = false;
+let selectedRange = 1;
+let sosActive = false;
+let sosTimerInterval = null;
+let elapsedSecs = 0;
+let sosGraceActive = false;
+let sosGraceTimer = null;
+let sosGraceCountdown = 5;
+let photoDataURL = null;
+let userLoc = { lat: 17.385044, lng: 78.486671, text: 'Hyderabad, Telangana' };
+let currentAlertId = null;
+let leafletMap = null;
+let ambulanceMarker = null;
+let victimMarker = null;
+let responderMarkersByKey = {};
+let mapPollInterval = null;
+let ambInterval = null;
+let currentAlertForModal = null;
+
+// ═══════════════════════════════════════════════════════════
+//  LOCAL DB
+//  Multi-user simulation via localStorage + BroadcastChannel
+//  (works across tabs/windows of the same browser)
+// ═══════════════════════════════════════════════════════════
+const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('rapidaid') : null;
+if (channel) {
+  channel.onmessage = (e) => {
+    const { type, data } = e.data;
+    if (type === 'NEW_ALERT') {
+      if (currentUser?.role === 'medic' && isOnline) {
+        setTimeout(() => { loadMedicAlerts(); toast('🚨 New SOS alert nearby!', 'e'); }, 300);
+      }
+      if (currentUser?.role === 'user') checkNearbyAlerts();
+    }
+    if (type === 'ALERT_UPDATE' && currentAlertId === data.id) {
+      refreshAlertCard(data);
+    }
+    if (type === 'ALERT_CANCELLED') {
+      loadMedicAlerts();
+    }
+  };
+}
+
+const LS = {
+  users: () => JSON.parse(localStorage.getItem('ra_users') || '[]'),
+  setUsers: (v) => localStorage.setItem('ra_users', JSON.stringify(v)),
+  alerts: () => JSON.parse(localStorage.getItem('ra_alerts') || '[]'),
+  setAlerts: (v) => localStorage.setItem('ra_alerts', JSON.stringify(v)),
+  me: () => JSON.parse(localStorage.getItem('ra_me') || 'null'),
+  setMe: (v) => localStorage.setItem('ra_me', JSON.stringify(v)),
+  clearMe: () => localStorage.removeItem('ra_me'),
+};
+
+// ═══════════════════════════════════════════════════════════
+//  IoT DEVICE INTEGRATION
+//  Lets a physical device (crash sensor, panic button, etc.)
+//  trigger an SOS for a registered user.
+//
+//  METHOD 1 — URL trigger (works with zero backend):
+//  Point the device/gateway at:
+//    <this page's URL>?device_trigger=<userId>&key=<deviceKey>
+//  (Find a user's own link + key in Profile → IoT Device.)
+//  Opening that URL auto-fires SOS for that user on THIS device/browser.
+//
+//  METHOD 2 — Relay server (for standalone hardware, e.g. an
+//  ESP32 with an accelerometer that has no way to open a browser
+//  itself). Fill in IOT_ENDPOINT with your relay server's base URL.
+//  The relay just needs two routes:
+//    GET  <IOT_ENDPOINT>/status?device=<id>&key=<key>  → {"triggered": true|false}
+//    POST <IOT_ENDPOINT>/ack?device=<id>&key=<key>     → clears the flag
+//  Your ESP32 POSTs to the relay when it detects a crash; this page
+//  polls /status every few seconds for the logged-in user and fires
+//  SOS the moment it sees triggered:true. Leave blank to disable.
+// ═══════════════════════════════════════════════════════════
+const IOT_ENDPOINT = ""; // e.g. "https://your-relay.example.com"
+let iotPollInterval = null;
+
+function initDeviceListener() {
+  checkDeviceTriggerFromURL();
+  startIoTPolling();
+}
+
+function startIoTPolling() {
+  clearInterval(iotPollInterval);
+  if (!IOT_ENDPOINT || !currentUser) return;
+  if (!currentUser.deviceKey) {
+    currentUser.deviceKey = generateDeviceKey();
+    const users = LS.users();
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx > -1) { users[idx] = currentUser; LS.setUsers(users); }
+    LS.setMe(currentUser);
+  }
+  const { id, deviceKey } = currentUser;
+  iotPollInterval = setInterval(async () => {
+    try {
+      const res = await fetch(`${IOT_ENDPOINT}/status?device=${id}&key=${deviceKey}`);
+      const data = await res.json();
+      if (data && data.triggered) {
+        fireIoTSOS('Hardware device');
+        fetch(`${IOT_ENDPOINT}/ack?device=${id}&key=${deviceKey}`, { method: 'POST' }).catch(() => {});
+      }
+    } catch (e) { /* relay unreachable — ignore silently, try again next tick */ }
+  }, 5000);
+}
+
+function checkDeviceTriggerFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get('device_trigger');
+  const key = params.get('key');
+  if (!userId || !key) return;
+
+  const user = LS.users().find(u => u.id === userId);
+  if (!user || user.deviceKey !== key) {
+    toast('⚠️ Invalid device trigger link', 'e');
+    return;
+  }
+
+  currentUser = user;
+  LS.setMe(user);
+  goHome();
+  fireIoTSOS(user.name + "'s device");
+}
+
+// Fires SOS immediately (no manual grace period) — used when a hardware
+// device, not a person's tap, is the source of the trigger.
+function fireIoTSOS(sourceLabel) {
+  if (sosActive) return;
+  toast(`🛰️ SOS triggered by ${sourceLabel}`, 'e');
+  actuallyFireSOS();
+}
+
+function generateDeviceKey() {
+  return Math.random().toString(36).slice(2, 8) + Math.random().toString(36).slice(2, 6);
+}
+
+function getDeviceTriggerURL(user) {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('device_trigger', user.id);
+  url.searchParams.set('key', user.deviceKey);
+  return url.toString();
+}
+
+function copyDeviceLink() {
+  if (!currentUser) return;
+  if (!currentUser.deviceKey) {
+    currentUser.deviceKey = generateDeviceKey();
+    const users = LS.users();
+    const idx = users.findIndex(u => u.id === currentUser.id);
+    if (idx > -1) { users[idx] = currentUser; LS.setUsers(users); }
+    LS.setMe(currentUser);
+  }
+  const link = getDeviceTriggerURL(currentUser);
+  navigator.clipboard?.writeText(link).then(
+    () => toast('📋 Device link copied!', 's'),
+    () => toast(link, 'i')
+  );
+}
+
+function testIoTTrigger() {
+  if (!currentUser) return;
+  fireIoTSOS('Test device');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════
+window.onload = () => {
+  getLocation();
+  const saved = LS.me();
+  if (saved) { currentUser = saved; goHome(); }
+  initDeviceListener();
+};
+
+// ═══════════════════════════════════════════════════════════
+//  LOCATION
+// ═══════════════════════════════════════════════════════════
+function getLocation() {
+  if (!navigator.geolocation) { setLocText(); return; }
+  navigator.geolocation.watchPosition(pos => {
+    userLoc.lat = pos.coords.latitude;
+    userLoc.lng = pos.coords.longitude;
+    userLoc.text = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+    setLocText();
+    // If SOS is active, update location in real time
+    if (sosActive && currentAlertId) updateAlertLocation();
+  }, () => setLocText(), { enableHighAccuracy: true, maximumAge: 5000 });
+}
+
+function setLocText() {
+  const el = document.getElementById('locText');
+  if (el) el.textContent = userLoc.text;
+}
+
+function updateAlertLocation() {
+  const alerts = LS.alerts();
+  const a = alerts.find(x => x.id === currentAlertId);
+  if (a) {
+    a.lat = userLoc.lat; a.lng = userLoc.lng; a.locationText = userLoc.text;
+    LS.setAlerts(alerts);
+    if (channel) channel.postMessage({ type: 'ALERT_UPDATED', data: a });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SCREENS
+// ═══════════════════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  startIoTPolling();
+  if (currentUser.role === 'user') {
+    document.getElementById('vuAva').textContent = currentUser.name[0];
+    document.getElementById('vuName').textContent = currentUser.name.split(' ')[0];
+    document.getElementById('backToVolunteer').classList.add('hidden');
+    show('home-victim');
+    setupParentSection();
+    checkNearbyAlerts();
+    // Poll for nearby alerts every 8s
+    setInterval(checkNearbyAlerts, 8000);
+  } else if (currentUser.role === 'medic') {
+    document.getElementById('mmAva').textContent = currentUser.name[0];
+    document.getElementById('mmName').textContent = currentUser.name.split(' ')[0];
+    show('home-medic');
+    // Poll for banner alerts every 5s
+    clearInterval(window._bannerPoll);
+    window._bannerPoll = setInterval(checkForNewAlertsBanner, 5000);
+  } else if (currentUser.role === 'admin') {
+    show('admin-screen');
+    loadAdminData();
+  }
+}
+
+function goHomeFromMap() {
+  if (currentUser?.role === 'medic') show('home-medic');
+  else show('home-victim');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REGISTER
+// ═══════════════════════════════════════════════════════════
+function pickRole(role) {
+  selectedRole = role;
+  document.getElementById('rc-user').classList.toggle('sel', role === 'user');
+  document.getElementById('rc-medic').classList.toggle('sel', role === 'medic');
+  document.getElementById('medicTypeRow').classList.toggle('hidden', role !== 'medic');
+  updateRegProgress();
+}
+function toggleType(el) {
+  el.classList.toggle('on');
+  const t = el.dataset.t;
+  selectedMedicTypes = selectedMedicTypes.includes(t)
+    ? selectedMedicTypes.filter(x => x !== t)
+    : [...selectedMedicTypes, t];
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REGISTER — create the account
+// ═══════════════════════════════════════════════════════════
+function doRegister() {
+  const errEl = document.getElementById('regErr');
+  errEl.classList.remove('on');
+
+  const name = v('rName');
+  const phone = normalizePhone(v('rPhone'));
+  const parentName = v('rParentName');
+  const parentPhone = v('rParent');
+
+  if (!name || !phone || !parentName || !parentPhone || !selectedRole) {
+    errEl.textContent = 'Please complete all fields.';
+    errEl.classList.add('on');
+    return;
+  }
+
+  if (selectedRole === 'medic' && selectedMedicTypes.length === 0) {
+    errEl.textContent = 'Please select at least one medic type.';
+    errEl.classList.add('on');
+    return;
+  }
+
+  const users = LS.users();
+  if (users.some(u => normalizePhone(u.phone) === phone)) {
+    errEl.textContent = 'An account with this phone number already exists.';
+    errEl.classList.add('on');
+    return;
+  }
+
+  const user = {
+    id: `user_${Date.now()}`,
+    name,
+    phone: v('rPhone'),
+    parentName,
+    parent: parentPhone,
+    role: selectedRole,
+    medicTypes: selectedRole === 'medic' ? selectedMedicTypes : [],
+    bloodGroup: '',
+    allergies: '',
+    conditions: '',
+    deviceKey: generateDeviceKey()
+  };
+
+  users.push(user);
+  LS.setUsers(users);
+  LS.setMe(user);
+  currentUser = user;
+
+  toast('Account created 🎉', 's');
+  goHome();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════
+function normalizePhone(p) { return (p || '').replace(/\D/g, '').slice(-10); }
+
+function doLogin() {
+
+  const phone = normalizePhone(v('lPhone'));
+
+  const user = LS.users().find(
+    u => normalizePhone(u.phone) === phone
+  );
+
+  if (!user || !phone) {
+
+    document
+      .getElementById('loginErr')
+      .classList.add('on');
+
+    document
+      .getElementById('loginErr')
+      .textContent =
+      'Phone number not found';
+
+    return;
+  }
+
+  LS.setMe(user);
+
+  currentUser = user;
+
+  toast('Login Successful', 's');
+
+  goHome();
+}
+
+function doLogout() {
+  if (sosActive) cancelSOS();
+  if (sosGraceActive) cancelSOSGrace();
+  clearInterval(mapPollInterval);
+  clearInterval(iotPollInterval);
+  LS.clearMe();
+  currentUser = null;
+  show('splash');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VOLUNTEER/MEDIC SELF-SOS
+//  Lets a medic in trouble use the full victim SOS flow themselves
+// ═══════════════════════════════════════════════════════════
+function medicNeedsHelp() {
+  if (!currentUser) return;
+  document.getElementById('vuAva').textContent = currentUser.name[0];
+  document.getElementById('vuName').textContent = currentUser.name.split(' ')[0];
+  document.getElementById('backToVolunteer').classList.remove('hidden');
+  show('home-victim');
+  setupParentSection();
+  checkNearbyAlerts();
+  toast('You can send your own SOS below 🆘', 'i');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHOTO
+// ═══════════════════════════════════════════════════════════
+function handlePhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    photoDataURL = ev.target.result;
+    const p = document.getElementById('photoPreview');
+    p.src = photoDataURL; p.classList.add('on');
+    toast('Photo attached 📷', 's');
+    // If SOS already active, update alert with photo
+    if (sosActive && currentAlertId) {
+      const alerts = LS.alerts();
+      const a = alerts.find(x => x.id === currentAlertId);
+      if (a) { a.photo = photoDataURL; LS.setAlerts(alerts); }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SITUATION UPDATE — send photo + description after SOS is active
+// ═══════════════════════════════════════════════════════════
+let acPhotoDataURL = null;
+
+function handleActiveCardPhoto(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    acPhotoDataURL = ev.target.result;
+    const preview = document.getElementById('ac-photo-preview');
+    const img = document.getElementById('ac-photo-preview-img');
+    img.src = acPhotoDataURL;
+    preview.classList.remove('hidden');
+    toast('Photo ready to send 📷', 'i');
+  };
+  reader.readAsDataURL(file);
+}
+
+function sendSituationUpdate() {
+  if (!sosActive || !currentAlertId) { toast('No active SOS to update.', 'i'); return; }
+
+  const description = v('ac-description');
+  if (!description && !acPhotoDataURL) {
+    toast('Add a description or photo first.', 'i');
+    return;
+  }
+
+  const alerts = LS.alerts();
+  const a = alerts.find(x => x.id === currentAlertId);
+  if (a) {
+    if (description) {
+      a.situationUpdates = a.situationUpdates || [];
+      a.situationUpdates.push({ text: description, at: Date.now() });
+      a.description = description; // latest, shown prominently to responders
+    }
+    if (acPhotoDataURL) a.photo = acPhotoDataURL;
+    LS.setAlerts(alerts);
+    if (channel) channel.postMessage({ type: 'ALERT_UPDATE', data: a });
+  }
+
+  document.getElementById('ac-description').value = '';
+  document.getElementById('ac-photo-preview').classList.add('hidden');
+  acPhotoDataURL = null;
+
+  toast('📤 Situation update sent to responders', 's');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SOS — TRIGGER
+// ═══════════════════════════════════════════════════════════
+function triggerSOS() {
+  if (sosActive || sosGraceActive) return;
+  sosGraceActive = true;
+  sosGraceCountdown = 5;
+
+  document.getElementById('sosBtn').classList.add('firing');
+  document.getElementById('sos-text').textContent = sosGraceCountdown;
+  document.getElementById('sos-sub').textContent = 'SENDING';
+  document.getElementById('sos-hint').innerHTML =
+    `🚨 Sending SOS in <b id="sos-grace-n">${sosGraceCountdown}</b>s… <span class="link-text" style="color:var(--r);font-weight:700;text-decoration:underline;" onclick="cancelSOSGrace()">Tap to Cancel</span>`;
+
+  sosGraceTimer = setInterval(() => {
+    sosGraceCountdown--;
+    const t = document.getElementById('sos-text');
+    if (t) t.textContent = sosGraceCountdown > 0 ? sosGraceCountdown : '🔴';
+    const n = document.getElementById('sos-grace-n');
+    if (n) n.textContent = sosGraceCountdown;
+    if (sosGraceCountdown <= 0) {
+      clearInterval(sosGraceTimer);
+      sosGraceActive = false;
+      actuallyFireSOS();
+    }
+  }, 1000);
+}
+
+function cancelSOSGrace() {
+  if (!sosGraceActive) return;
+  clearInterval(sosGraceTimer);
+  sosGraceActive = false;
+  document.getElementById('sosBtn').classList.remove('firing');
+  document.getElementById('sos-text').textContent = 'SOS';
+  document.getElementById('sos-sub').textContent = 'PRESS';
+  document.getElementById('sos-hint').textContent = 'Press SOS to alert nearby medics & ambulances';
+  toast('SOS cancelled', 'i');
+}
+
+function actuallyFireSOS() {
+  if (sosActive) return;
+  sosActive = true;
+
+  const alertId = `alert_${Date.now()}`;
+  currentAlertId = alertId;
+
+ const alert = {
+
+  id: alertId,
+
+  victimId: currentUser.id,
+
+  victimName: currentUser.name,
+
+  victimPhone: currentUser.phone,
+
+  victimRole: currentUser.role,
+
+  victimType:
+      currentUser.medicTypes || [],
+
+  parentPhone:
+      currentUser.parent,
+
+  lat: userLoc.lat,
+
+  lng: userLoc.lng,
+
+  googleMap:
+    `https://www.google.com/maps?q=${userLoc.lat},${userLoc.lng}`,
+
+  locationText:
+      userLoc.text,
+
+  bloodGroup: currentUser.bloodGroup || '',
+  allergies: currentUser.allergies || '',
+  conditions: currentUser.conditions || '',
+
+  photo: photoDataURL,
+
+  status: 'active',
+
+  createdAt: Date.now(),
+
+  responders: [],
+
+  notifiedCount: 0
+};
+
+  // Save locally
+  const alerts = LS.alerts();
+  alerts.push(alert);
+  LS.setAlerts(alerts);
+
+  // Broadcast to all open tabs/windows (real multi-user simulation)
+  if (channel) channel.postMessage({ type: 'NEW_ALERT', data: alert });
+
+  // Update UI
+  document.body.classList.add('sos-live');
+  document.getElementById('sosBtn').classList.add('firing');
+  document.getElementById('sos-text').textContent = '🔴';
+  document.getElementById('sos-sub').textContent = 'ACTIVE';
+  document.getElementById('sos-hint').textContent = '🚨 Responders are being alerted…';
+  document.getElementById('vu-status-pill').className = 'status-pill sp-alert';
+  document.getElementById('vu-status-txt').textContent = 'SOS Active · Help is coming';
+  document.getElementById('activeCard').classList.remove('hidden');
+  document.getElementById('photo-box').classList.add('hidden');
+  document.body.classList.add('sos-live');
+
+  // Timer
+  elapsedSecs = 0;
+  sosTimerInterval = setInterval(() => {
+    elapsedSecs++;
+    const el = document.getElementById('ac-time');
+    if (el) el.textContent = elapsedSecs < 60 ? elapsedSecs + 's' : Math.floor(elapsedSecs/60) + 'm';
+  }, 1000);
+
+  // Send SMS (simulated + real if endpoint configured)
+  sendSMS(currentUser.parent, `🚨 EMERGENCY: ${currentUser.name} has pressed SOS! Location: https://maps.google.com/?q=${userLoc.lat},${userLoc.lng}`);
+
+  // Dispatch alerts to nearby medics
+  dispatchToNearbyMedics(alertId);
+
+  toast('🚨 SOS sent! SMS dispatched to parent.', 'e');
+  setTimeout(() => toast(`📍 Location shared: ${userLoc.text}`, 'i'), 1200);
+
+  // Log for the parent-alert panel
+  setTimeout(() => {
+    logParentAlert(`🚨 SOS triggered — location sent to ${currentUser.parentName||'Guardian'} (${currentUser.parent})`);
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REAL-TIME DISPATCH TO NEARBY MEDICS
+// ═══════════════════════════════════════════════════════════
+function dispatchToNearbyMedics(alertId) {
+  const users = LS.users();
+  const medics = users.filter(u => u.role === 'medic');
+
+  // Notify medics in expanding radius waves
+  const waves = [
+    { range: 1, delay: 500 },
+    { range: 2, delay: 2500 },
+    { range: 3, delay: 4500 },
+    { range: 5, delay: 7000 },
+  ];
+
+  let totalNotified = 0;
+  waves.forEach(({ range, delay }) => {
+    setTimeout(() => {
+      const inRange = medics.filter(m => haversine(userLoc.lat, userLoc.lng, m.lat || userLoc.lat, m.lng || userLoc.lng + Math.random()*0.02) < range);
+      totalNotified += inRange.length;
+      const notified = Math.max(totalNotified, range === 1 ? Math.min(medics.length,2) : Math.min(medics.length,range+1));
+      const acEl = document.getElementById('ac-notified');
+      if (acEl) acEl.textContent = notified;
+      toast(`📡 ${notified} medic(s) within ${range}km notified`, 'i');
+
+      // Update stored
+      const alerts = LS.alerts();
+      const a = alerts.find(x => x.id === alertId);
+      if (a) { a.notifiedCount = notified; LS.setAlerts(alerts); }
+      if (channel) channel.postMessage({ type: 'ALERT_UPDATED', data: a });
+    }, delay);
+  });
+
+  // Simulate ambulance accepting at 5s
+  setTimeout(() => {
+    if (!sosActive) return;
+    addResponder(alertId, { name: 'City Ambulance #3', role: 'Ambulance Unit', type: 'ambulance', status: 'enroute', eta: '4 min' });
+    toast('🚑 Ambulance #3 is on the way!', 's');
+    sendSMS(currentUser.parent, `✅ An ambulance has accepted and is heading to ${currentUser.name}. Track: Active`);
+  }, 5000);
+
+  // Simulate medic accepting at 8s
+  setTimeout(() => {
+    if (!sosActive) return;
+    const medic = medics[0] || { name: 'Dr. Priya Reddy', medicTypes: ['doctor'] };
+    addResponder(alertId, { name: medic.name, role: (medic.medicTypes||['volunteer']).join(', '), type: 'medic', status: 'onway', eta: '2 min' });
+    toast(`🧑‍⚕️ ${medic.name} is on the way!`, 's');
+  }, 8000);
+}
+
+function addResponder(alertId, responder) {
+  const alerts = LS.alerts();
+  const a = alerts.find(x => x.id === alertId);
+  if (a) { a.responders.push(responder); LS.setAlerts(alerts); }
+
+  const accepted = document.getElementById('ac-accepted');
+  if (accepted) accepted.textContent = parseInt(accepted.textContent || '0') + 1;
+
+  const wrap = document.getElementById('respWrap');
+  if (!wrap) return;
+  const d = document.createElement('div');
+  d.className = 'resp-row';
+  d.innerHTML = `
+    <div class="rr-ava" style="background:${responder.type==='ambulance'?'rgba(59,130,246,.15)':'rgba(0,217,126,.12)'}">${responder.type==='ambulance'?'🚑':'🧑‍⚕️'}</div>
+    <div class="rr-info">
+      <div class="rr-name">${responder.name}</div>
+      <div class="rr-role">${responder.role}</div>
+    </div>
+    <div class="rr-status ${responder.status==='enroute'?'rrs-enroute':'rrs-onway'}">${responder.status==='enroute'?'En Route':'On Way'} · ${responder.eta||''}</div>`;
+  wrap.appendChild(d);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CANCEL SOS
+// ═══════════════════════════════════════════════════════════
+function cancelSOS() {
+  if (!sosActive) return;
+  sosActive = false;
+  clearInterval(sosTimerInterval);
+  clearInterval(mapPollInterval);
+
+  const alerts = LS.alerts();
+  const a = alerts.find(x => x.id === currentAlertId);
+  if (a) { a.status = 'cancelled'; LS.setAlerts(alerts); }
+  if (channel) channel.postMessage({ type: 'ALERT_CANCELLED', data: { id: currentAlertId } });
+
+  // Reset UI
+  document.body.classList.remove('sos-live');
+  document.getElementById('sosBtn').classList.remove('firing');
+  document.getElementById('sos-text').textContent = 'SOS';
+  document.getElementById('sos-sub').textContent = 'PRESS';
+  document.getElementById('sos-hint').textContent = 'Press SOS to alert nearby medics & ambulances';
+  document.getElementById('vu-status-pill').className = 'status-pill sp-safe';
+  document.getElementById('vu-status-txt').textContent = 'Safe · No Active Alert';
+  document.getElementById('activeCard').classList.add('hidden');
+  document.getElementById('photo-box').classList.remove('hidden');
+  document.getElementById('respWrap').innerHTML = '';
+  document.getElementById('ac-notified').textContent = '0';
+  document.getElementById('ac-accepted').textContent = '0';
+  elapsedSecs = 0;
+  toast('SOS cancelled.', 'i');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CHECK NEARBY ALERTS (for user to see there are other alerts)
+// ═══════════════════════════════════════════════════════════
+function checkNearbyAlerts() {
+  const alerts = LS.alerts().filter(a => a.status === 'active' && a.victimId !== currentUser?.id);
+  const notice = document.getElementById('nearby-alerts-notice');
+  if (!notice) return;
+  if (alerts.length > 0) {
+    notice.classList.remove('hidden');
+    document.getElementById('nearby-count').textContent = alerts.length;
+  } else {
+    notice.classList.add('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEDIC — ONLINE TOGGLE
+// ═══════════════════════════════════════════════════════════
+function toggleOnline() {
+  isOnline = !isOnline;
+  document.getElementById('onlineSw').classList.toggle('on', isOnline);
+  const lbl = document.getElementById('ol-lbl');
+  lbl.textContent = isOnline ? 'ONLINE' : 'OFFLINE';
+  lbl.className = isOnline ? 'olabel on' : 'olabel off';
+
+  if (isOnline) {
+    toast('You are online 🟢', 's');
+    loadMedicAlerts();
+    // Poll localStorage every 6s for new alerts
+    window._medicPoll = setInterval(() => isOnline && loadMedicAlerts(), 6000);
+  } else {
+    clearInterval(window._medicPoll);
+    toast('You are offline.', 'i');
+    document.getElementById('m-alert-list').innerHTML = '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Go online to receive alerts.</div></div>';
+    document.getElementById('m-badge').textContent = '0';
+  }
+}
+
+function setRange(km, el) {
+  selectedRange = km;
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  if (isOnline) loadMedicAlerts();
+}
+
+function loadMedicAlerts() {
+  if (!isOnline) return;
+  const alerts = LS.alerts().filter(a => a.status === 'active');
+  const listEl = document.getElementById('m-alert-list');
+  document.getElementById('m-badge').textContent = alerts.length;
+
+  if (!alerts.length) {
+    listEl.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No active alerts in your range right now.</div></div>';
+    return;
+  }
+
+  listEl.innerHTML = alerts.map(a => {
+    const dist = haversine(userLoc.lat, userLoc.lng, a.lat, a.lng);
+    if (dist > selectedRange) return '';
+    const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
+    const mins = Math.ceil(dist * 3);
+    const timeAgo = getTimeAgo(a.createdAt);
+    return `
+    <div class="m-alert-card new" id="mac_${a.id}">
+      <div class="mac-top">
+        <div>
+          <div class="mac-name">🚨 ${a.victimName}</div>
+          <div class="mac-time">${timeAgo} · ~${mins} min walk</div>
+        </div>
+        <div class="mac-dist">${distStr}</div>
+      </div>
+      ${a.photo ? `<img class="mac-photo on" src="${a.photo}" alt="Scene">` : ''}
+      <div class="mac-loc">📍 ${a.locationText}</div>
+      <div class="mac-actions">
+        <button class="btn-sm btn-sm-ghost" onclick="dismissMedicAlert('${a.id}')">Dismiss</button>
+        <button class="btn-sm btn-sm-red" onclick="openAlertModal('${a.id}','${distStr}')">View &amp; Respond →</button>
+      </div>
+    </div>`;
+  }).join('');
+  if (!listEl.innerHTML.trim()) listEl.innerHTML = '<div class="empty"><div class="empty-icon">📍</div><div class="empty-text">No alerts within '+selectedRange+'km range.</div></div>';
+}
+
+function dismissMedicAlert(id) {
+  const el = document.getElementById('mac_' + id);
+  if (el) { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; el.style.transition = 'all .3s'; setTimeout(() => el.remove(), 300); }
+}
+
+function openAlertModal(alertId, dist) {
+  const a = LS.alerts().find(x => x.id === alertId);
+  if (!a) return;
+  currentAlertForModal = { ...a, dist };
+  document.getElementById('am-sub').textContent = 'Emergency · ' + getTimeAgo(a.createdAt);
+  document.getElementById('am-victim').textContent = a.victimName;
+  document.getElementById('am-phone').textContent = '📞 ' + a.victimPhone;
+  document.getElementById('am-loc').innerHTML =
+
+`📍 ${a.locationText}
+
+<br><br>
+
+<a href="https://www.google.com/maps?q=${a.lat},${a.lng}"
+target="_blank">
+
+🗺 Open in Google Maps
+
+</a>`;
+  document.getElementById('am-dist').textContent = '📏 ' + dist + ' away';
+
+  const medBox = document.getElementById('am-med-box');
+  const hasMed = a.bloodGroup || a.allergies || a.conditions;
+  if (hasMed) {
+    document.getElementById('am-med-content').innerHTML = `
+      ${a.bloodGroup ? `<div class="med-info-row"><b>Blood Group:</b> ${a.bloodGroup}</div>` : ''}
+      ${a.allergies ? `<div class="med-info-row"><b>Allergies:</b> ${a.allergies}</div>` : ''}
+      ${a.conditions ? `<div class="med-info-row"><b>Conditions:</b> ${a.conditions}</div>` : ''}
+    `;
+    medBox.classList.remove('hidden');
+  } else {
+    medBox.classList.add('hidden');
+  }
+
+  const sitBox = document.getElementById('am-situation-box');
+  if (a.description) {
+    document.getElementById('am-situation-content').textContent = a.description;
+    sitBox.classList.remove('hidden');
+  } else {
+    sitBox.classList.add('hidden');
+  }
+
+  const ph = document.getElementById('am-photo');
+  if (a.photo) { ph.src = a.photo; ph.style.display = 'block'; }
+  else ph.style.display = 'none';
+  openModal('alertModal');
+
+  // Keep refreshing while the modal is open, so a live description/photo
+  // update sent by the victim shows up without needing to reopen it.
+  clearInterval(window._alertModalPoll);
+  window._alertModalPoll = setInterval(() => {
+    const modalEl = document.getElementById('alertModal');
+    if (!modalEl.classList.contains('open')) { clearInterval(window._alertModalPoll); return; }
+    const fresh = LS.alerts().find(x => x.id === alertId);
+    if (!fresh) return;
+    if (fresh.description) {
+      document.getElementById('am-situation-content').textContent = fresh.description;
+      sitBox.classList.remove('hidden');
+    }
+    if (fresh.photo) { ph.src = fresh.photo; ph.style.display = 'block'; }
+  }, 3000);
+}
+
+function acceptAlert() {
+  closeModal('alertModal');
+  if (!currentAlertForModal) return;
+  const alertId = currentAlertForModal.id;
+
+  // Add this medic as responder
+  const alerts = LS.alerts();
+  const a = alerts.find(x => x.id === alertId);
+  if (a) {
+    const resp = { name: currentUser.name, role: (currentUser.medicTypes||[]).join(', ')||'Volunteer', type:'medic', status:'onway', eta:'~3 min' };
+    a.responders.push(resp);
+    LS.setAlerts(alerts);
+    if (channel) channel.postMessage({ type: 'ALERT_UPDATE', data: a });
+  }
+
+  sendSMS(currentAlertForModal.parentPhone, `✅ ${currentUser.name} (${(currentUser.medicTypes||[]).join(', ')||'Volunteer'}) is responding to ${currentAlertForModal.victimName}'s emergency.`);
+  toast('✅ Alert accepted! Navigate to victim.', 's');
+  toast(`📍 ${currentAlertForModal.locationText}`, 'i');
+  dismissMedicAlert(alertId);
+
+  // Open map to victim location
+  setTimeout(() => { show('map-screen'); initMap(currentAlertForModal.lat, currentAlertForModal.lng); }, 800);
+}
+
+function declineAlert() { closeModal('alertModal'); toast('Alert declined.', 'i'); }
+
+// ═══════════════════════════════════════════════════════════
+//  SMS SENDER (real backend integration)
+// ═══════════════════════════════════════════════════════════
+async function sendSMS(to, message) {
+  console.log(`📱 SMS → ${to}: ${message}`);
+  // Simulated (shows in console)
+  // For real SMS, uncomment and configure your Twilio endpoint:
+  /*
+  try {
+    await fetch(TWILIO_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, message })
+    });
+  } catch(e) { console.error('SMS failed:', e); }
+  */
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAP — LEAFLET
+// ═══════════════════════════════════════════════════════════
+function initMap(targetLat, targetLng) {
+  const lat = targetLat || userLoc.lat;
+  const lng = targetLng || userLoc.lng;
+
+  if (!leafletMap) {
+    leafletMap = L.map('leaflet-map', { zoomControl: true, attributionControl: false }).setView([lat, lng], 15);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+    }).addTo(leafletMap);
+  } else {
+    leafletMap.setView([lat, lng], 15);
+  }
+
+  // Victim marker
+  if (victimMarker) victimMarker.remove();
+  victimMarker = L.marker([lat, lng], {
+    icon: L.divIcon({ html:'<div style="font-size:1.5rem;filter:drop-shadow(0 0 8px rgba(230,46,46,.8))">📍</div>', className:'', iconAnchor:[12,24] })
+  }).addTo(leafletMap).bindPopup(currentUser?.name || 'Victim Location').openPopup();
+
+  // Ambulance marker (starts offset, moves toward victim)
+  const ambStartLat = lat - 0.015;
+  const ambStartLng = lng - 0.012;
+  if (ambulanceMarker) ambulanceMarker.remove();
+  ambulanceMarker = L.marker([ambStartLat, ambStartLng], {
+    icon: L.divIcon({ html:'<div style="font-size:1.5rem;filter:drop-shadow(0 0 8px rgba(59,130,246,.8))">🚑</div>', className:'', iconAnchor:[12,12] })
+  }).addTo(leafletMap).bindPopup('City Ambulance #3');
+
+  // Fresh tracking session: clear any previously-plotted responder markers
+  Object.values(responderMarkersByKey).forEach(({ marker, interval }) => { marker.remove(); clearInterval(interval); });
+  responderMarkersByKey = {};
+  plotNewResponders(lat, lng);
+
+  // Plot all other active alert markers
+  LS.alerts().filter(a => a.status === 'active').forEach(a => {
+    if (a.id !== currentAlertId) {
+      L.marker([a.lat, a.lng], {
+        icon: L.divIcon({ html:'<div style="font-size:1.2rem;opacity:.8">🆘</div>', className:'', iconAnchor:[10,10] })
+      }).addTo(leafletMap).bindPopup(`🚨 ${a.victimName}`);
+    }
+  });
+
+  // Animate ambulance toward victim
+  let step = 0; const steps = 80;
+  clearInterval(ambInterval);
+  ambInterval = setInterval(() => {
+    step++;
+    const t = step / steps;
+    const curLat = ambStartLat + (lat - ambStartLat) * t;
+    const curLng = ambStartLng + (lng - ambStartLng) * t;
+    ambulanceMarker.setLatLng([curLat, curLng]);
+    const distKm = haversine(curLat, curLng, lat, lng);
+    const eta = Math.ceil(distKm / 0.4);
+    const el = document.getElementById('tc-eta');
+    if (el) el.textContent = eta > 0 ? eta + ' min' : 'Arrived';
+    const de = document.getElementById('tc-dist');
+    if (de) de.textContent = distKm < 0.1 ? (distKm*1000).toFixed(0)+'m' : distKm.toFixed(2)+' km';
+    if (step >= steps) { clearInterval(ambInterval); toast('🚑 Ambulance arrived!', 's'); }
+  }, 300);
+
+  // Keep polling for newly-accepted responders while the map stays open
+  clearInterval(mapPollInterval);
+  mapPollInterval = setInterval(() => {
+    plotNewResponders(lat, lng);
+    updateMapAlertsList();
+  }, 3000);
+
+  // Update map alerts list
+  updateMapAlertsList();
+  leafletMap.invalidateSize();
+}
+
+// Plots a marker for any responder on the tracked alert that isn't on the
+// map yet. Existing markers/animations are left untouched so responders
+// already en route don't jump around.
+function plotNewResponders(lat, lng) {
+  const trackedAlert = LS.alerts().find(a => a.id === currentAlertId)
+    || LS.alerts().find(a => a.lat === lat && a.lng === lng);
+  if (!trackedAlert || !trackedAlert.responders || !trackedAlert.responders.length) return;
+
+  trackedAlert.responders.forEach((r, i) => {
+    if (r.type === 'ambulance') return; // already shown as the ambulance marker
+    const key = `${r.name}_${i}`;
+    if (responderMarkersByKey[key]) return; // already plotted
+
+    const startLat = lat + (Math.random() - 0.5) * 0.03;
+    const startLng = lng + (Math.random() - 0.5) * 0.03;
+    const icon = r.role?.includes('doctor') ? '🩺' : r.role?.includes('nurse') ? '💉' : '🧑‍⚕️';
+    const marker = L.marker([startLat, startLng], {
+      icon: L.divIcon({ html:`<div style="font-size:1.35rem;filter:drop-shadow(0 0 6px rgba(0,217,126,.8))">${icon}</div>`, className:'', iconAnchor:[12,12] })
+    }).addTo(leafletMap).bindPopup(`${r.name}<br>${r.role || 'Volunteer'} · ${r.eta || 'en route'}`);
+
+    let rStep = 0; const rSteps = 60 + i * 15;
+    const rIv = setInterval(() => {
+      rStep++;
+      const rt = Math.min(rStep / rSteps, 1);
+      marker.setLatLng([startLat + (lat - startLat) * rt, startLng + (lng - startLng) * rt]);
+      if (rt >= 1) clearInterval(rIv);
+    }, 300);
+
+    responderMarkersByKey[key] = { marker, interval: rIv };
+  });
+}
+
+function updateMapAlertsList() {
+  const active = LS.alerts().filter(a => a.status === 'active');
+  const el = document.getElementById('map-alerts-list');
+  if (!el) return;
+  if (!active.length) { el.innerHTML = '<div style="font-size:.75rem;color:var(--muted);padding:.5rem 0;">No active alerts</div>'; return; }
+  el.innerHTML = active.map(a => `
+    <div class="ma-row">
+      <div class="ma-badge" style="background:${a.victimId===currentUser?.id?'var(--r)':'var(--y)'}"></div>
+      <div style="flex:1;font-weight:600;">${a.victimName}</div>
+      <div style="color:var(--muted2);">${getTimeAgo(a.createdAt)}</div>
+      <div style="color:var(--r);font-weight:700;font-size:.7rem;">${a.victimId===currentUser?.id?'YOU':''}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ADMIN
+// ═══════════════════════════════════════════════════════════
+function openAdminModal() { openModal('adminModal'); }
+function doAdminLogin() {
+  if (document.getElementById('adminPw').value !== 'admin123') {
+    document.getElementById('adminErr').classList.add('on'); return;
+  }
+  closeModal('adminModal');
+  document.getElementById('adminErr').classList.remove('on');
+  currentUser = { id:'admin', name:'Admin', role:'admin' };
+  LS.setMe(currentUser);
+  show('admin-screen');
+  loadAdminData();
+}
+
+function loadAdminData() {
+  const users = LS.users();
+  const alerts = LS.alerts();
+  const medics = users.filter(u => u.role==='medic');
+  const active = alerts.filter(a => a.status==='active');
+
+  document.getElementById('a-users').textContent = users.filter(u=>u.role==='user').length;
+  document.getElementById('a-medics').textContent = medics.length;
+  document.getElementById('a-alerts').textContent = alerts.length;
+  document.getElementById('a-active').textContent = active.length;
+
+  const list = document.getElementById('admin-user-list');
+  if (!users.length) { list.innerHTML = '<div style="padding:1rem;text-align:center;font-size:.78rem;color:var(--muted);">No users yet.</div>'; return; }
+  list.innerHTML = users.map(u => `
+    <div class="tbl-row">
+      <div class="tc" style="font-weight:700;">${u.name}</div>
+      <div class="tc" style="color:var(--muted2);font-size:.72rem;">${u.phone}</div>
+      <div class="tc"><span class="rpill rpill-${u.role}">${u.role}</span></div>
+      <div class="tc" style="color:var(--muted2);font-size:.7rem;">${(u.medicTypes||[]).join(', ')||'—'}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════════════════════════
+function showUserProfile() {
+  if (!currentUser) return;
+  const myAlerts = LS.alerts().filter(a => a.victimId === currentUser.id);
+  document.getElementById('profile-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:.3rem 1rem;font-size:.83rem;">
+      <span style="color:var(--muted2);">Name</span><strong>${currentUser.name}</strong>
+      <span style="color:var(--muted2);">Phone</span><span>${currentUser.phone||'—'}</span>
+      <span style="color:var(--muted2);">Parent</span><span>${currentUser.parent||'—'}</span>
+      <span style="color:var(--muted2);">Role</span><span style="color:var(--r);font-weight:700;">${currentUser.role}</span>
+      ${currentUser.medicTypes?.length ? `<span style="color:var(--muted2);">Type</span><span>${currentUser.medicTypes.join(', ')}</span>` : ''}
+      ${currentUser.role==='user' ? `<span style="color:var(--muted2);">SOS Count</span><span>${myAlerts.length}</span>` : ''}
+      <span style="color:var(--muted2);">Blood Group</span><span>${currentUser.bloodGroup || '—'}</span>
+      <span style="color:var(--muted2);">Allergies</span><span>${currentUser.allergies || '—'}</span>
+      <span style="color:var(--muted2);">Conditions</span><span>${currentUser.conditions || '—'}</span>
+    </div>`;
+  openModal('profileModal');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEDICAL ID — edit
+// ═══════════════════════════════════════════════════════════
+function openMedicalIdModal() {
+  if (!currentUser) return;
+  document.getElementById('mBlood').value = currentUser.bloodGroup || '';
+  document.getElementById('mAllergies').value = currentUser.allergies || '';
+  document.getElementById('mConditions').value = currentUser.conditions || '';
+  openModal('medicalIdModal');
+}
+
+function saveMedicalId() {
+  currentUser.bloodGroup = v('mBlood');
+  currentUser.allergies = v('mAllergies');
+  currentUser.conditions = v('mConditions');
+
+  const users = LS.users();
+  const idx = users.findIndex(u => u.id === currentUser.id);
+  if (idx > -1) { users[idx] = currentUser; LS.setUsers(users); }
+  LS.setMe(currentUser);
+
+  closeModal('medicalIdModal');
+  toast('Medical ID updated ⚕️', 's');
+  showUserProfile();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-wrap').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg, type='i') {
+  const w = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function v(id) { return document.getElementById(id)?.value.trim() || ''; }
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function getTimeAgo(ts) {
+  const d = Math.floor((Date.now() - ts) / 1000);
+  if (d < 60) return d + 's ago';
+  if (d < 3600) return Math.floor(d/60) + 'm ago';
+  return Math.floor(d/3600) + 'h ago';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REGISTRATION PROGRESS
+// ═══════════════════════════════════════════════════════════
+function updateRegProgress() {
+  const s1 = v('rName') && v('rPhone');
+  const s2 = s1 && (v('rParent') || v('rParentName'));
+  const s3 = s2 && selectedRole;
+  document.getElementById('rp1')?.classList.toggle('done', !!s1);
+  document.getElementById('rp2')?.classList.toggle('done', !!s2);
+  document.getElementById('rp3')?.classList.toggle('done', !!s3);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PARENT ALERT PANEL
+// ═══════════════════════════════════════════════════════════
+let parentAlertLog = [];
+
+function setupParentSection() {
+  if (!currentUser) return;
+  const nameEl  = document.getElementById('piName');
+  const phoneEl = document.getElementById('piPhone');
+  if (nameEl)  nameEl.textContent  = currentUser.parentName || 'Guardian';
+  if (phoneEl) phoneEl.textContent = currentUser.parent || 'Not set';
+  renderParentLog();
+}
+
+function logParentAlert(msg) {
+  parentAlertLog.unshift({ msg, time: Date.now() });
+  if (parentAlertLog.length > 8) parentAlertLog.pop();
+  renderParentLog();
+  const badge = document.getElementById('psBadge');
+  if (badge) { badge.textContent = 'Sent'; badge.style.background = 'rgba(0,217,126,.15)'; badge.style.borderColor = 'rgba(0,217,126,.35)'; badge.style.color = 'var(--g)'; }
+}
+
+function renderParentLog() {
+  const el = document.getElementById('parentAlertsLog');
+  if (!el) return;
+  if (!parentAlertLog.length) {
+    el.innerHTML = '<div style="font-size:.72rem;color:var(--muted);padding:.4rem 0;">No alerts sent yet.</div>';
+    return;
+  }
+  el.innerHTML = parentAlertLog.map(a => `
+    <div class="pal-item">
+      <span style="font-size:.8rem;flex-shrink:0;">📩</span>
+      <span class="pal-msg">${a.msg}</span>
+      <span class="pal-time">${getTimeAgo(a.time)}</span>
+    </div>`).join('');
+}
+
+function sendManualParentAlert() {
+  if (!currentUser?.parent) { toast('No parent phone configured', 'e'); return; }
+  const locStr = userLoc.text || 'location unknown';
+  const msg = sosActive
+    ? `📢 Update: ${currentUser.name} SOS is active. Current location: https://maps.google.com/?q=${userLoc.lat},${userLoc.lng}`
+    : `📢 Manual check-in from ${currentUser.name}. Location: ${locStr}. All is well.`;
+  sendSMS(currentUser.parent, msg);
+  logParentAlert(sosActive ? '📢 Update sent — SOS still active' : '📢 Manual check-in sent to parent');
+  toast('✅ Alert sent to parent!', 's');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEDIC NOTIFICATION BANNER
+// ═══════════════════════════════════════════════════════════
+let notifBannerAlert = null;
+let lastSeenAlertId  = null;
+
+function checkForNewAlertsBanner() {
+  if (currentUser?.role !== 'medic' || !isOnline) return;
+  const active = LS.alerts().filter(a => a.status === 'active');
+  if (!active.length) return;
+  const newest = active.sort((a,b) => b.createdAt - a.createdAt)[0];
+  if (newest.id === lastSeenAlertId) return;
+  lastSeenAlertId = newest.id;
+  showNotifBanner(newest);
+  // Flash nav dot
+  const dot = document.getElementById('medicNotifDot');
+  if (dot) dot.classList.add('show');
+}
+
+function showNotifBanner(alert) {
+  notifBannerAlert = alert;
+  const dist = haversine(userLoc.lat, userLoc.lng, alert.lat, alert.lng);
+  const distStr = dist < 1 ? (dist*1000).toFixed(0)+'m' : dist.toFixed(1)+'km';
+  const bodyEl = document.getElementById('anBodyText');
+  if (bodyEl) bodyEl.textContent =
+    `🧑 ${alert.victimName} · 📍 ${distStr} away
+${alert.locationText}`;
+  const banner = document.getElementById('alertNotifBanner');
+  if (banner) banner.classList.add('show');
+  // Auto-dismiss after 15s
+  setTimeout(() => dismissNotifBanner(), 15000);
+}
+
+function dismissNotifBanner() {
+  const banner = document.getElementById('alertNotifBanner');
+  if (banner) banner.classList.remove('show');
+}
+
+function acceptFromBanner() {
+  dismissNotifBanner();
+  if (!notifBannerAlert) return;
+  openAlertModal(notifBannerAlert.id, (() => {
+    const d = haversine(userLoc.lat,userLoc.lng,notifBannerAlert.lat,notifBannerAlert.lng);
+    return d<1?(d*1000).toFixed(0)+'m':d.toFixed(1)+'km';
+  })());
+}
+
+function declineFromBanner() {
+  dismissNotifBanner();
+  toast('Alert dismissed.', 'i');
+  const dot = document.getElementById('medicNotifDot');
+  if (dot) dot.classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MEDIC TRACKER SCREEN
+// ═══════════════════════════════════════════════════════════
+let trackerMap = null;
+let trackerMarkers = [];
+
+function showMedicTracker() {
+  show('tracker-screen');
+  const av = document.getElementById('trAva');
+  const nm = document.getElementById('trName');
+  if (av) av.textContent = currentUser.name[0];
+  if (nm) nm.textContent = currentUser.name.split(' ')[0];
+  loadTrackerData();
+  initTrackerMap();
+}
+
+function loadTrackerData() {
+  const allAlerts   = LS.alerts().filter(a => a.status === 'active');
+  const allUsers    = LS.users();
+  const onlineMedics = allUsers.filter(u => u.role === 'medic');
+  const responding  = allAlerts.reduce((acc, a) => acc + (a.responders?.length || 0), 0);
+
+  const onlineEl = document.getElementById('trOnline');
+  const alertEl  = document.getElementById('trAlerts');
+  const respEl   = document.getElementById('trResponding');
+  if (onlineEl) onlineEl.textContent = isOnline ? Math.max(1, onlineMedics.length) : onlineMedics.length;
+  if (alertEl)  alertEl.textContent  = allAlerts.length;
+  if (respEl)   respEl.textContent   = responding;
+
+  // Responder cards
+  const listEl = document.getElementById('medicTrackerList');
+  if (listEl) {
+    const responders = [];
+    // Add self if online
+    if (isOnline) responders.push({ name: currentUser.name, role: (currentUser.medicTypes||[]).join(', ')||'Volunteer', type:'self', status:'online', dist: '0m' });
+    // Add simulated responders from active alerts
+    allAlerts.forEach(a => {
+      (a.responders||[]).forEach(r => {
+        const d = haversine(userLoc.lat,userLoc.lng,a.lat,a.lng);
+        responders.push({ ...r, alertName: a.victimName, dist: d<1?(d*1000).toFixed(0)+'m':d.toFixed(1)+'km' });
+      });
+    });
+    if (!responders.length) {
+      listEl.innerHTML = '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">No active responders. Go online to appear here.</div></div>';
+    } else {
+      listEl.innerHTML = responders.map(r => `
+        <div class="medic-card ${r.type==='ambulance'?'en-route':'active-resp'}">
+          <div class="mc-ava ${r.type==='ambulance'?'mc-ava-amb':'mc-ava-medic'}">${r.type==='ambulance'?'🚑':'🧑‍⚕️'}</div>
+          <div class="mc-info">
+            <div class="mc-name">${r.name}${r.type==='self'?' (You)':''}</div>
+            <div class="mc-type">${r.role||'Volunteer'}${r.alertName?' · Responding to '+r.alertName:''}</div>
+          </div>
+          <div class="mc-right">
+            <div class="mc-eta">${r.eta||'Active'}</div>
+            <div class="mc-dist">${r.dist||'—'}</div>
+            <div class="mc-status ${r.type==='ambulance'?'mcs-enroute':'mcs-online'}">${r.type==='ambulance'?'En Route':'● Online'}</div>
+          </div>
+        </div>`).join('');
+    }
+  }
+
+  // Victims list
+  const vicEl = document.getElementById('trackerVictimsList');
+  if (vicEl) {
+    if (!allAlerts.length) {
+      vicEl.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">No active SOS alerts nearby.</div></div>';
+    } else {
+      vicEl.innerHTML = allAlerts.map(a => {
+        const d = haversine(userLoc.lat,userLoc.lng,a.lat,a.lng);
+        const dStr = d<1?(d*1000).toFixed(0)+'m':d.toFixed(1)+'km';
+        const ago = getTimeAgo(a.createdAt);
+        return `
+        <div class="medic-card" style="border-color:rgba(230,46,46,.3);background:rgba(230,46,46,.04);">
+          <div class="mc-ava" style="background:rgba(230,46,46,.12);border:1.5px solid rgba(230,46,46,.3);">🆘</div>
+          <div class="mc-info">
+            <div class="mc-name">${a.victimName}</div>
+            <div class="mc-type">📍 ${a.locationText}</div>
+            <div class="mc-type" style="margin-top:2px;">🕐 ${ago} · ${(a.responders||[]).length} responding</div>
+          </div>
+          <div class="mc-right">
+            <div class="mc-eta" style="color:var(--r);">${dStr}</div>
+            <button class="btn-sm btn-sm-red" style="margin-top:.4rem;font-size:.7rem;" onclick="openAlertModal('${a.id}','${dStr}')">Respond</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function initTrackerMap() {
+  setTimeout(() => {
+    if (!trackerMap) {
+      trackerMap = L.map('tracker-map', { zoomControl: false, attributionControl: false })
+        .setView([userLoc.lat, userLoc.lng], 14);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(trackerMap);
+    } else {
+      trackerMap.setView([userLoc.lat, userLoc.lng], 14);
+    }
+    // Clear old markers
+    trackerMarkers.forEach(m => m.remove());
+    trackerMarkers = [];
+
+    // Self marker (medic)
+    const selfM = L.marker([userLoc.lat, userLoc.lng], {
+      icon: L.divIcon({ html:'<div style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(0,217,126,.9))">🧑‍⚕️</div>', className:'', iconAnchor:[12,12] })
+    }).addTo(trackerMap).bindPopup('You ('+currentUser.name+')');
+    trackerMarkers.push(selfM);
+
+    // Alert markers
+    LS.alerts().filter(a => a.status==='active').forEach(a => {
+      const m = L.marker([a.lat, a.lng], {
+        icon: L.divIcon({ html:'<div style="font-size:1.4rem;filter:drop-shadow(0 0 6px rgba(230,46,46,.9))">🆘</div>', className:'', iconAnchor:[12,12] })
+      }).addTo(trackerMap).bindPopup('🚨 '+a.victimName);
+      trackerMarkers.push(m);
+    });
+
+    trackerMap.invalidateSize();
+  }, 200);
+}
+
+</script>
+</body>
+</html>
